@@ -27,4 +27,31 @@ public class StudyWrongAnswer extends BaseEntity {
     /** 最后一次答错时间 */
     private Date lastWrongTime;
 
+    /** 来源类型(article/lesson) */
+    private String sourceType;
+
+    /** 来源ID */
+    private Long sourceId;
+
+    /** 来源标题 */
+    private String sourceTitle;
+
+    /** 知识点ID */
+    private Long knowledgePointId;
+
+    /** 知识点名称 */
+    private String knowledgePointName;
+
+    /** 题目内容 */
+    private String content;
+
+    /** 题目类型 */
+    private String type;
+
+    /** 正确答案 */
+    private String answer;
+
+    /** 解析 */
+    private String explanation;
+
 }

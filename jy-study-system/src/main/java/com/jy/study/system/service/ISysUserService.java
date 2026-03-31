@@ -141,6 +141,16 @@ public interface ISysUserService
     public int resetUserPwd(SysUser user);
 
     /**
+     * 批量修改用户密码
+     *
+     * @param userIds 用户ID数组
+     * @param newPassword 新密码明文
+     * @param operName 操作人
+     * @return 成功修改数量
+     */
+    public int batchResetUserPwd(Long[] userIds, String newPassword, String operName);
+
+    /**
      * 校验用户名称是否唯一
      * 
      * @param user 用户信息

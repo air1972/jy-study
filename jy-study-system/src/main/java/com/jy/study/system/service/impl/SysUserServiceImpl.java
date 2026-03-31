@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Validator;
+import org.apache.shiro.crypto.hash.Md5Hash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,9 @@ import com.jy.study.common.exception.ServiceException;
 import com.jy.study.common.utils.ShiroUtils;
 import com.jy.study.common.utils.StringUtils;
 import com.jy.study.common.utils.bean.BeanValidators;
-import com.jy.study.common.utils.security.Md5Utils;
 import com.jy.study.common.utils.spring.SpringUtils;
+import com.jy.study.common.utils.DateUtils;
+import com.jy.study.common.utils.security.Md5Utils;
 import com.jy.study.system.domain.SysPost;
 import com.jy.study.system.domain.SysUserPost;
 import com.jy.study.system.domain.SysUserRole;
@@ -308,6 +310,44 @@ public class SysUserServiceImpl implements ISysUserService
     public int resetUserPwd(SysUser user)
     {
         return updateUserInfo(user);
+    }
+
+    /**
+     * 批量修改用户密码
+     *
+     * @param userIds 用户ID组
+     * @param newPassword 新密码明文
+     * @param operName 操作人
+     * @return 成功修改数量
+     */
+    @Override
+    @Transactional
+    public int batchResetUserPwd(Long[] userIds, String newPassword, String operName)
+    {
+        if (userIds == null || userIds.length == 0)
+        {
+            return 0;
+        }
+        int rows = 0;
+        for (Long userId : userIds)
+        {
+            if (SysUser.isAdmin(userId))
+            {
+                continue;
+            }
+            checkUserDataScope(userId);
+            SysUser dbUser = userMapper.selectUserById(userId);
+            if (dbUser == null)
+            {
+                continue;
+            }
+            dbUser.setSalt(ShiroUtils.randomSalt());
+            dbUser.setPassword(new Md5Hash(dbUser.getLoginName() + newPassword + dbUser.getSalt()).toHex());
+            dbUser.setPwdUpdateDate(DateUtils.getNowDate());
+            dbUser.setUpdateBy(operName);
+            rows += userMapper.updateUser(dbUser);
+        }
+        return rows;
     }
 
     /**

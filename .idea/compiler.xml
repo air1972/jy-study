@@ -14,6 +14,7 @@
         <module name="jy-study-framework" />
         <module name="jy-study-generator" />
         <module name="jy-study-common" />
+        <module name="ruoyi-admin" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="17" />

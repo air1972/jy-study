@@ -21,5 +21,10 @@
             <groupId>com.jy.study</groupId>
             <artifactId>jy-study-common</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-system</artifactId>
+        </dependency>
     </dependencies>
 </project> 

@@ -66,6 +66,30 @@
         .wa-toolbar .btn {
             border-radius: 10px;
         }
+        .wa-filter-box {
+            background: #f7fbff;
+            border: 1px solid #dce9f6;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+        .wa-filter-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink-900);
+            margin-bottom: 12px;
+        }
+        .wa-filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .wa-filter-row .form-control {
+            min-width: 180px;
+            height: 38px;
+            border-radius: 10px;
+        }
         .wa-card {
             background: #fff;
             border: 1px solid #e9f0f7;
@@ -99,6 +123,14 @@
             background: #fff7e8;
             border: 1px solid #f8d8aa;
             color: #b45309;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .wa-tag {
+            background: #edf7ff;
+            border: 1px solid #d1e6fb;
+            color: #236892;
             border-radius: 999px;
             padding: 4px 10px;
             font-size: 12px;
@@ -156,6 +188,21 @@
                 <button class="btn btn-default" onclick="goBack()">返回</button>
             </div>
         </div>
+        <div class="wa-filter-box">
+            <div class="wa-filter-title">错题筛选</div>
+            <div class="wa-filter-row">
+                <select id="waSourceType" class="form-control">
+                    <option value="">全部来源</option>
+                    <option value="article">文章</option>
+                    <option value="lesson">课程</option>
+                </select>
+                <select id="waSourceId" class="form-control">
+                    <option value="">全部内容</option>
+                </select>
+                <button class="btn btn-primary btn-sm" onclick="applyWrongAnswerFilter()">筛选</button>
+                <button class="btn btn-default btn-sm" onclick="resetWrongAnswerFilter()">重置</button>
+            </div>
+        </div>
         <div class="ai-box" id="aiSuggestionBox" style="display:none;">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong>学习建议（千问）</strong>
@@ -181,7 +228,13 @@
     <th:block th:include="include :: footer" />
     <script th:inline="javascript">
         var prefix = ctx + "web/exercise";
-        $(function() { loadWrongAnswers(1); });
+        var wrongSourceType = "";
+        var wrongSourceId = "";
+
+        $(function() {
+            bindWrongAnswerFilterEvents();
+            loadWrongAnswers(1);
+        });
 
         function goBack() {
             if (window.history.length > 1) {
@@ -191,27 +244,83 @@
             }
         }
 
+        function bindWrongAnswerFilterEvents() {
+            $("#waSourceType").on("change", function() {
+                wrongSourceType = $(this).val() || "";
+                wrongSourceId = "";
+                loadWrongAnswerSourceOptions(wrongSourceType);
+            });
+            $("#waSourceId").on("change", function() {
+                wrongSourceId = $(this).val() || "";
+            });
+        }
+
+        function loadWrongAnswerSourceOptions(sourceType) {
+            if (!sourceType) {
+                $("#waSourceId").html('<option value="">全部内容</option>');
+                return;
+            }
+            var url = sourceType === "article" ? prefix + "/knowledge/articles" : prefix + "/knowledge/lessons";
+            $.get(url, function(res) {
+                var html = '<option value="">全部内容</option>';
+                if (res.code == 0 && res.data) {
+                    res.data.forEach(function(item) {
+                        var id = sourceType === "article" ? item.articleId : item.lessonId;
+                        html += '<option value="' + id + '">' + escapeHtml(item.title || '') + '</option>';
+                    });
+                }
+                $("#waSourceId").html(html);
+            });
+        }
+
+        function applyWrongAnswerFilter() {
+            wrongSourceType = $("#waSourceType").val() || "";
+            wrongSourceId = $("#waSourceId").val() || "";
+            loadWrongAnswers(1);
+        }
+
+        function resetWrongAnswerFilter() {
+            wrongSourceType = "";
+            wrongSourceId = "";
+            $("#waSourceType").val("");
+            $("#waSourceId").html('<option value="">全部内容</option>');
+            loadWrongAnswers(1);
+        }
+
         function loadWrongAnswers(page) {
-            $.get(prefix + "/wrong-answer/list", { pageNum: page }, function(res) {
+            $.get(prefix + "/wrong-answer/list", {
+                pageNum: page,
+                pageSize: 5,
+                contentType: wrongSourceType,
+                contentId: wrongSourceId
+            }, function(res) {
                 if (res.code == 0) {
                     var rows = res.rows, total = res.total;
                     var html = "";
                     rows.forEach(function(item) {
+                        var sourceTitle = escapeHtml(item.sourceTitle || (item.sourceType === 'lesson' ? '课程习题' : '题库习题'));
+                        var typeName = escapeHtml(item.typeName || '题目');
+                        var knowledgePoint = escapeHtml(item.knowledgePointName || '');
                         html += '<div class="wa-card">';
-                        html += '  <div class="wa-title">' + (item.content || '题目已删除') + '</div>';
+                        html += '  <div class="wa-title">' + escapeHtml(item.content || '题目已删除') + '</div>';
                         html += '  <div class="wa-meta">';
                         html += '    <span class="wa-pill">错误次数：' + (item.wrongCount || 0) + '</span>';
-                        html += '    <span>最后答错：' + (item.lastWrongTime || '') + '</span>';
+                        html += '    <span class="wa-tag">' + typeName + '</span>';
+                        html += '    <span class="wa-tag">' + sourceTitle + '</span>';
+                        if (knowledgePoint) {
+                            html += '    <span class="wa-tag">' + knowledgePoint + '</span>';
+                        }
+                        html += '    <span>最后答错：' + escapeHtml(item.lastWrongTime || '') + '</span>';
                         html += '  </div>';
                         html += '  <div class="wa-actions">';
                         html += '    <button class="btn btn-link btn-sm" onclick="showExerciseDetail(' + item.exerciseId + ')">题目详情</button>';
                         html += '  </div>';
                         html += '</div>';
                     });
-                    $("#wrong-answer-list").html(html || '<div class="empty-box">暂无错题记录</div>');
+                    $("#wrong-answer-list").html(html || '<div class="empty-box">当前筛选条件下暂无错题记录</div>');
                     renderPagination("#wrong-answer-pagination", total, page, 5, "loadWrongAnswers");
                 } else {
-                    $("#wrong-answer-list").html('<div class="empty-box">加载失败：' + res.msg + '</div>');
+                    $("#wrong-answer-list").html('<div class="empty-box">加载失败：' + escapeHtml(res.msg || '') + '</div>');
                 }
             });
         }
@@ -220,9 +329,9 @@
             $.get(prefix + "/detail/" + id, function(res) {
                 if (res.code == 0) {
                     var ex = res.data;
-                    var content = '<div style="white-space: pre-wrap;">' + (ex.content || '') + '</div>'
-                                + '<div class="mt-2 text-success"><strong>正确答案：</strong>' + (ex.answer || '') + '</div>'
-                                + '<div class="mt-2"><strong>解析：</strong>' + (ex.explanation || '暂无解析') + '</div>';
+                    var content = '<div style="white-space: pre-wrap;">' + escapeHtml(ex.content || '') + '</div>'
+                                + '<div class="mt-2 text-success"><strong>正确答案：</strong>' + escapeHtml(ex.answer || '') + '</div>'
+                                + '<div class="mt-2"><strong>解析：</strong>' + escapeHtml(ex.explanation || '暂无解析') + '</div>';
                     $("#wrongDetailTitle").text("题目详情");
                     $("#wrongDetailBody").html(content);
                     $("#wrongDetailModal").modal('show');
@@ -251,7 +360,10 @@
         function generateAiSuggestion() {
             $("#aiSuggestionBox").show();
             $("#aiSuggestionContent").text("正在生成学习建议，请稍后...");
-            $.get(prefix + "/wrong-answer/suggestion", function(res) {
+            $.get(prefix + "/wrong-answer/suggestion", {
+                contentType: wrongSourceType,
+                contentId: wrongSourceId
+            }, function(res) {
                 if (res.code == 0) {
                     $("#aiSuggestionContent").text(res.data || "暂无建议");
                 } else {
@@ -260,6 +372,15 @@
             }).fail(function() {
                 $("#aiSuggestionContent").text("生成失败");
             });
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
     </script>
 </body>

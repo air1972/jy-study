@@ -1,6 +1,7 @@
 package com.jy.study.web.controller.system;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -30,6 +31,7 @@ import com.jy.study.common.utils.StringUtils;
 import com.jy.study.common.utils.poi.ExcelUtil;
 import com.jy.study.framework.shiro.service.SysPasswordService;
 import com.jy.study.framework.shiro.util.AuthorizationUtils;
+import com.jy.study.system.service.ISysConfigService;
 import com.jy.study.system.service.ISysDeptService;
 import com.jy.study.system.service.ISysPostService;
 import com.jy.study.system.service.ISysRoleService;
@@ -60,6 +62,9 @@ public class SysUserController extends BaseController
 
     @Autowired
     private SysPasswordService passwordService;
+
+    @Autowired
+    private ISysConfigService configService;
 
     @RequiresPermissions("system:user:view")
     @GetMapping()
@@ -174,9 +179,11 @@ public class SysUserController extends BaseController
     public String view(@PathVariable("userId") Long userId, ModelMap mmap)
     {
         userService.checkUserDataScope(userId);
-        mmap.put("user", userService.selectUserById(userId));
+        SysUser user = userService.selectUserById(userId);
+        mmap.put("user", user);
         mmap.put("roleGroup", userService.selectUserRoleGroup(userId));
         mmap.put("postGroup", userService.selectUserPostGroup(userId));
+        appendPasswordMeta(user, mmap);
         return prefix + "/view";
     }
 
@@ -214,8 +221,31 @@ public class SysUserController extends BaseController
     @GetMapping("/resetPwd/{userId}")
     public String resetPwd(@PathVariable("userId") Long userId, ModelMap mmap)
     {
-        mmap.put("user", userService.selectUserById(userId));
+        userService.checkUserDataScope(userId);
+        SysUser user = userService.selectUserById(userId);
+        mmap.put("user", user);
+        appendPasswordMeta(user, mmap);
         return prefix + "/resetPwd";
+    }
+
+    @RequiresPermissions("system:user:resetPwd")
+    @GetMapping("/batchResetPwd")
+    public String batchResetPwd(String ids, ModelMap mmap)
+    {
+        Long[] userIds = Convert.toLongArray(ids);
+        long skippedAdminCount = Arrays.stream(userIds).filter(SysUser::isAdmin).count();
+        List<SysUser> users = Arrays.stream(userIds)
+                .filter(userId -> !SysUser.isAdmin(userId))
+                .peek(userService::checkUserDataScope)
+                .map(userService::selectUserById)
+                .filter(StringUtils::isNotNull)
+                .collect(Collectors.toList());
+        mmap.put("ids", users.stream().map(item -> String.valueOf(item.getUserId())).collect(Collectors.joining(",")));
+        mmap.put("users", users);
+        mmap.put("selectedCount", users.size());
+        mmap.put("skippedAdminCount", skippedAdminCount);
+        mmap.put("initPassword", configService.selectConfigByKey("sys.user.initPassword"));
+        return prefix + "/batchResetPwd";
     }
 
     @RequiresPermissions("system:user:resetPwd")
@@ -228,6 +258,8 @@ public class SysUserController extends BaseController
         userService.checkUserDataScope(user.getUserId());
         user.setSalt(ShiroUtils.randomSalt());
         user.setPassword(passwordService.encryptPassword(user.getLoginName(), user.getPassword(), user.getSalt()));
+        user.setPwdUpdateDate(DateUtils.getNowDate());
+        user.setUpdateBy(getLoginName());
         if (userService.resetUserPwd(user) > 0)
         {
             if (ShiroUtils.getUserId().longValue() == user.getUserId().longValue())
@@ -237,6 +269,34 @@ public class SysUserController extends BaseController
             return success();
         }
         return error();
+    }
+
+    @RequiresPermissions("system:user:resetPwd")
+    @Log(title = "批量重置密码", businessType = BusinessType.UPDATE)
+    @PostMapping("/batchResetPwd")
+    @ResponseBody
+    public AjaxResult batchResetPwdSave(String ids, String password)
+    {
+        Long[] userIds = Convert.toLongArray(ids);
+        if (userIds == null || userIds.length == 0)
+        {
+            return error("请至少选择一个用户");
+        }
+        long skippedAdminCount = Arrays.stream(userIds).filter(SysUser::isAdmin).count();
+        int rows = userService.batchResetUserPwd(userIds, password, getLoginName());
+        if (rows > 0)
+        {
+            if (skippedAdminCount > 0)
+            {
+                return success("已统一修改 " + rows + " 个用户的密码，超级管理员已自动跳过");
+            }
+            return success("已统一修改 " + rows + " 个用户的密码");
+        }
+        if (skippedAdminCount > 0)
+        {
+            return AjaxResult.warn("本次选择的用户仅包含超级管理员，未执行批量改密");
+        }
+        return error("未修改任何用户密码");
     }
 
     /**
@@ -349,5 +409,54 @@ public class SysUserController extends BaseController
     {
         mmap.put("dept", deptService.selectDeptById(deptId));
         return prefix + "/deptTree";
+    }
+
+    private void appendPasswordMeta(SysUser user, ModelMap mmap)
+    {
+        String initPassword = StringUtils.defaultString(configService.selectConfigByKey("sys.user.initPassword"));
+        boolean canDisplayRawPassword = false;
+        String currentPasswordDisplay = "系统仅保存加密后的密码，当前原始密码无法直接查看，可为该用户重新设置新密码。";
+        String passwordStatusText = "已设置自定义密码";
+        String passwordStatusClass = "label-primary";
+
+        if (user != null && StringUtils.isNotEmpty(user.getPassword()) && StringUtils.isNotEmpty(user.getSalt())
+                && StringUtils.isNotEmpty(user.getLoginName()) && StringUtils.isNotEmpty(initPassword))
+        {
+            String encryptedInitPassword = passwordService.encryptPassword(user.getLoginName(), initPassword, user.getSalt());
+            if (StringUtils.equals(encryptedInitPassword, user.getPassword()))
+            {
+                canDisplayRawPassword = true;
+                currentPasswordDisplay = initPassword;
+                passwordStatusText = "当前仍使用初始密码";
+                passwordStatusClass = "label-warning";
+            }
+        }
+
+        if (user != null && user.getPassword() == null)
+        {
+            passwordStatusText = "未设置密码";
+            passwordStatusClass = "label-default";
+            currentPasswordDisplay = "该用户当前未设置登录密码。";
+        }
+
+        mmap.put("canDisplayRawPassword", canDisplayRawPassword);
+        mmap.put("currentPasswordDisplay", currentPasswordDisplay);
+        mmap.put("passwordStatusText", passwordStatusText);
+        mmap.put("passwordStatusClass", passwordStatusClass);
+        mmap.put("passwordDigestPreview", maskPasswordDigest(user == null ? null : user.getPassword()));
+        mmap.put("initPassword", initPassword);
+    }
+
+    private String maskPasswordDigest(String passwordDigest)
+    {
+        if (StringUtils.isEmpty(passwordDigest))
+        {
+            return "未记录";
+        }
+        if (passwordDigest.length() <= 12)
+        {
+            return passwordDigest;
+        }
+        return passwordDigest.substring(0, 6) + "..." + passwordDigest.substring(passwordDigest.length() - 4);
     }
 }

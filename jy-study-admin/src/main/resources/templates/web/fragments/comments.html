@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="comments(commentPrefix, commentType, targetId)">
+    <style>
+        .comments-widget {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+            padding: 28px;
+            margin-top: 30px;
+        }
+
+        .comments-widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .comments-widget-title {
+            margin: 0;
+            color: #1f2937;
+            font-size: 1.45rem;
+            font-weight: 600;
+        }
+
+        .comments-widget-subtitle {
+            margin: 6px 0 0;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .comments-widget-count {
+            white-space: nowrap;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #eef6ff;
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        .comments-form {
+            background: #f8fafc;
+            border: 1px solid #e5edf5;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 24px;
+        }
+
+        .comments-textarea {
+            width: 100%;
+            min-height: 112px;
+            border: 1px solid #d7e2ee;
+            border-radius: 12px;
+            padding: 14px 16px;
+            resize: vertical;
+            outline: none;
+            font-size: 0.98rem;
+            line-height: 1.7;
+            background: #fff;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .comments-textarea:focus {
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.12);
+        }
+
+        .comments-form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .comments-form-tip {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .comments-submit {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: #fff;
+            font-weight: 600;
+            transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+        }
+
+        .comments-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+
+        .comments-submit:disabled {
+            opacity: .7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comments-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 18px;
+        }
+
+        .comments-load-more {
+            border: 1px solid #cfe0f7;
+            border-radius: 999px;
+            padding: 10px 22px;
+            background: #fff;
+            color: #2563eb;
+            font-weight: 600;
+            transition: all .2s ease;
+        }
+
+        .comments-load-more:hover {
+            background: #f4f9ff;
+        }
+
+        .comments-empty {
+            padding: 28px 16px;
+            text-align: center;
+            border: 1px dashed #d7e2ee;
+            border-radius: 14px;
+            color: #94a3b8;
+            background: #fbfdff;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 14px;
+            border: 1px solid #edf2f7;
+            background: #fff;
+        }
+
+        .comment-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .comment-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comment-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            color: #111827;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .comment-time {
+            color: #94a3b8;
+            font-size: 0.86rem;
+            white-space: nowrap;
+        }
+
+        .comment-content {
+            color: #374151;
+            line-height: 1.85;
+            word-break: break-word;
+        }
+
+        .comment-ops {
+            margin-top: 10px;
+        }
+
+        .comment-delete {
+            border: none;
+            background: transparent;
+            color: #ef4444;
+            padding: 0;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 767px) {
+            .comments-widget {
+                padding: 20px;
+            }
+
+            .comments-widget-header,
+            .comments-form-footer,
+            .comment-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .comments-submit {
+                width: 100%;
+            }
+
+            .comment-time,
+            .comments-widget-count {
+                white-space: normal;
+            }
+        }
+    </style>
+
+    <div class="comments-widget" th:id="${commentPrefix + 'CommentWidget'}">
+        <div class="comments-widget-header">
+            <div>
+                <h4 class="comments-widget-title">
+                    <i class="fa fa-commenting-o"></i> 评论区
+                </h4>
+                <p class="comments-widget-subtitle">欢迎分享你的理解、笔记和学习感受。</p>
+            </div>
+            <div class="comments-widget-count">
+                <span th:id="${commentPrefix + 'CommentCount'}">0</span> 条评论
+            </div>
+        </div>
+
+        <div class="comments-form">
+            <textarea class="comments-textarea"
+                      th:id="${commentPrefix + 'CommentInput'}"
+                      maxlength="500"
+                      placeholder="写下你的想法，和大家一起交流吧..."></textarea>
+            <div class="comments-form-footer">
+                <span class="comments-form-tip" th:id="${commentPrefix + 'CommentTip'}">0 / 500</span>
+                <button type="button" class="comments-submit" th:id="${commentPrefix + 'CommentSubmit'}">
+                    <i class="fa fa-paper-plane"></i> 发表评论
+                </button>
+            </div>
+        </div>
+
+        <div class="comments-list" th:id="${commentPrefix + 'CommentList'}">
+            <div class="comments-empty">评论加载中...</div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        (function () {
+            function init() {
+                var $ = window.jQuery;
+                if (!$) {
+                    return;
+                }
+
+                var commentPrefix = /*[[${commentPrefix}]]*/ "comment";
+                var commentType = /*[[${commentType}]]*/ "1";
+                var targetId = /*[[${targetId}]]*/ 0;
+                var currentUserId = /*[[${@shiroService.getPrincipal() != null ? @shiroService.getPrincipal().userId : 0}]]*/ 0;
+                var listUrl = /*[[@{/web/comments/list}]]*/ "/web/comments/list";
+                var addUrl = /*[[@{/web/comments/add}]]*/ "/web/comments/add";
+                var deleteUrl = /*[[@{/web/comments/delete}]]*/ "/web/comments/delete";
+                var defaultAvatar = /*[[@{/img/user.png}]]*/ "/img/user.png";
+                var pageSize = 5;
+                var currentPage = 1;
+                var hasMore = false;
+                var loadingMore = false;
+
+                var inputEl = document.getElementById(commentPrefix + "CommentInput");
+                var submitEl = document.getElementById(commentPrefix + "CommentSubmit");
+                var listEl = document.getElementById(commentPrefix + "CommentList");
+                var countEl = document.getElementById(commentPrefix + "CommentCount");
+                var tipEl = document.getElementById(commentPrefix + "CommentTip");
+                var loadMoreWrapId = commentPrefix + "CommentLoadMore";
+
+                if (!inputEl || !submitEl || !listEl || !countEl || !tipEl || !targetId) {
+                    return;
+                }
+
+                function escapeHtml(text) {
+                    return String(text || "")
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#39;");
+                }
+
+                function formatContent(text) {
+                    return escapeHtml(text).replace(/\r?\n/g, "<br>");
+                }
+
+                function normalizePath(path) {
+                    if (!path) {
+                        return defaultAvatar;
+                    }
+                    if (/^(https?:)?\/\//.test(path) || path.charAt(0) === "/") {
+                        return path;
+                    }
+                    if (window.ctx) {
+                        return window.ctx + String(path).replace(/^\/+/, "");
+                    }
+                    return "/" + String(path).replace(/^\/+/, "");
+                }
+
+                function setCount(count) {
+                    countEl.textContent = count || 0;
+                }
+
+                function setLoading(message) {
+                    listEl.innerHTML = '<div class="comments-empty">' + escapeHtml(message) + '</div>';
+                }
+
+                function normalizeErrorMessage(message) {
+                    var text = String(message || "");
+                    if (!text) {
+                        return "评论暂时不可用，请稍后重试。";
+                    }
+                    if (text.indexOf("study_comment") !== -1 || text.indexOf("Exception") !== -1 || text.indexOf("###") !== -1 || text.indexOf("select ") !== -1) {
+                        return "评论功能还没有完成数据库初始化，请联系管理员执行评论表脚本。";
+                    }
+                    return text;
+                }
+
+                function updateLoadMore() {
+                    var oldWrap = document.getElementById(loadMoreWrapId);
+                    if (oldWrap) {
+                        oldWrap.remove();
+                    }
+                    if (!hasMore) {
+                        return;
+                    }
+                    listEl.insertAdjacentHTML("afterend",
+                        '<div class="comments-actions" id="' + loadMoreWrapId + '">' +
+                        '<button type="button" class="comments-load-more">加载更多评论</button>' +
+                        '</div>');
+                    document.querySelector('#' + loadMoreWrapId + ' .comments-load-more').onclick = function () {
+                        if (!loadingMore) {
+                            loadComments(currentPage + 1, true);
+                        }
+                    };
+                }
+
+                function buildCommentItem(item) {
+                    var avatar = normalizePath(item.avatar);
+                    var canDelete = Number(currentUserId || 0) > 0 && Number(item.userId || 0) === Number(currentUserId || 0);
+                    var deleteHtml = canDelete
+                        ? '<div class="comment-ops"><button type="button" class="comment-delete" data-comment-id="' + item.commentId + '"><i class="fa fa-trash-o"></i> 删除</button></div>'
+                        : '';
+                    return '<div class="comment-item">' +
+                        '<img class="comment-avatar" src="' + escapeHtml(avatar) + '" alt="用户头像" onerror="this.onerror=null;this.src=\'' + escapeHtml(defaultAvatar) + '\'">' +
+                        '<div class="comment-main">' +
+                        '<div class="comment-meta">' +
+                        '<span class="comment-author">' + escapeHtml(item.userName || '学习用户') + '</span>' +
+                        '<span class="comment-time">' + escapeHtml(item.createTimeText || '') + '</span>' +
+                        '</div>' +
+                        '<div class="comment-content">' + formatContent(item.content || '') + '</div>' +
+                        deleteHtml +
+                        '</div>' +
+                        '</div>';
+                }
+
+                function bindDeleteEvents() {
+                    listEl.querySelectorAll('.comment-delete').forEach(function (btn) {
+                        btn.onclick = function () {
+                            var commentId = this.getAttribute('data-comment-id');
+                            if (!commentId) {
+                                return;
+                            }
+                            $.modal.confirm('确认删除这条评论吗？', function () {
+                                $.ajax({
+                                    url: deleteUrl,
+                                    type: 'POST',
+                                    data: { commentId: commentId },
+                                    success: function (res) {
+                                        if (res.code === 0) {
+                                            $.modal.msgSuccess(res.msg || '删除成功');
+                                            currentPage = 1;
+                                            hasMore = false;
+                                            loadComments(1, false);
+                                            return;
+                                        }
+                                        $.modal.msgError(normalizeErrorMessage(res.msg));
+                                    },
+                                    error: function () {
+                                        $.modal.msgError('删除失败，请稍后重试');
+                                    }
+                                });
+                            });
+                        };
+                    });
+                }
+
+                function renderComments(comments, count, append) {
+                    setCount(count);
+                    if ((!comments || comments.length === 0) && !append) {
+                        listEl.innerHTML = '<div class="comments-empty">还没有评论，来留下第一条吧。</div>';
+                        updateLoadMore();
+                        return;
+                    }
+                    var html = [];
+                    for (var i = 0; i < comments.length; i++) {
+                        html.push(buildCommentItem(comments[i] || {}));
+                    }
+                    if (append) {
+                        listEl.insertAdjacentHTML('beforeend', html.join(''));
+                    } else {
+                        listEl.innerHTML = html.join('');
+                    }
+                    bindDeleteEvents();
+                    updateLoadMore();
+                }
+
+                function loadComments(pageNum, append) {
+                    var targetPage = pageNum || 1;
+                    if (!append) {
+                        setLoading("评论加载中...");
+                    }
+                    loadingMore = true;
+                    $.ajax({
+                        url: listUrl,
+                        type: "GET",
+                        data: {
+                            type: commentType,
+                            targetId: targetId,
+                            pageNum: targetPage,
+                            pageSize: pageSize
+                        },
+                        success: function (res) {
+                            if (res.code !== 0) {
+                                if (!append) {
+                                    listEl.innerHTML = '<div class="comments-empty">' + escapeHtml(normalizeErrorMessage(res.msg)) + '</div>';
+                                    updateLoadMore();
+                                } else {
+                                    $.modal.msgError(normalizeErrorMessage(res.msg));
+                                }
+                                return;
+                            }
+                            var data = res.data || {};
+                            currentPage = targetPage;
+                            hasMore = !!data.hasMore;
+                            renderComments(data.comments || [], data.count || 0, append);
+                        },
+                        error: function () {
+                            if (!append) {
+                                listEl.innerHTML = '<div class="comments-empty">评论加载失败，请稍后刷新重试。</div>';
+                                updateLoadMore();
+                            } else {
+                                $.modal.msgError('加载更多失败，请稍后重试');
+                            }
+                        },
+                        complete: function () {
+                            loadingMore = false;
+                        }
+                    });
+                }
+
+                function updateTip() {
+                    tipEl.textContent = (inputEl.value || "").length + " / 500";
+                }
+
+                function submitComment() {
+                    var content = inputEl.value || "";
+                    if (!content.trim()) {
+                        $.modal.msgError("评论内容不能为空");
+                        inputEl.focus();
+                        return;
+                    }
+                    if (content.length > 500) {
+                        $.modal.msgError("评论内容不能超过500个字符");
+                        return;
+                    }
+                    if (typeof handleLoginRequired === "function" && handleLoginRequired()) {
+                        return;
+                    }
+
+                    submitEl.disabled = true;
+                    submitEl.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 发布中...';
+
+                    $.ajax({
+                        url: addUrl,
+                        type: "POST",
+                        data: {
+                            type: commentType,
+                            targetId: targetId,
+                            content: content
+                        },
+                        success: function (res) {
+                            if (res.code === 0) {
+                                inputEl.value = "";
+                                updateTip();
+                                currentPage = 1;
+                                hasMore = false;
+                                loadComments(1, false);
+                                $.modal.msgSuccess(res.msg || "评论发布成功");
+                                return;
+                            }
+                            if (res.msg && res.msg.indexOf("登录") !== -1 && typeof handleLoginRequired === "function") {
+                                window.isAuthenticated = false;
+                                handleLoginRequired();
+                                return;
+                            }
+                            $.modal.msgError(normalizeErrorMessage(res.msg));
+                        },
+                        error: function () {
+                            $.modal.msgError("评论发布失败，请稍后重试");
+                        },
+                        complete: function () {
+                            submitEl.disabled = false;
+                            submitEl.innerHTML = '<i class="fa fa-paper-plane"></i> 发表评论';
+                        }
+                    });
+                }
+
+                inputEl.addEventListener("input", updateTip);
+                submitEl.addEventListener("click", submitComment);
+                updateTip();
+                loadComments(1, false);
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</div>
+</body>
+</html>

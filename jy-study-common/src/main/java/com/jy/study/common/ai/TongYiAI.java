@@ -178,6 +178,20 @@ public class TongYiAI {
     }
 
     /**
+     * 批量辅助判定简答题。
+     * 输入项示例：
+     * [{"qid":"1","subject":"语文","grade":"五年级","question":"...","referenceAnswer":"...","analysis":"...","userAnswer":"..."}]
+     */
+    public JSONArray judgeShortAnswerBatch(JSONArray items) {
+        if (items == null || items.isEmpty()) {
+            return new JSONArray();
+        }
+        String prompt = buildShortAnswerJudgePrompt(items);
+        String response = callTongYiAI(prompt);
+        return parseShortAnswerJudgeResults(response);
+    }
+
+    /**
      * 生成个性化学习路径（结构化 JSON）
      */
     public String generatePersonalizedLearningPath(String context) {
@@ -193,6 +207,79 @@ public class TongYiAI {
         sb.append("【用户学习画像】\n");
         sb.append(context);
         return callTongYiAI(sb.toString());
+    }
+
+    private String buildShortAnswerJudgePrompt(JSONArray items) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("你是一位严谨的中小学阅卷老师，现在需要对一批简答题进行辅助判分。\n");
+        sb.append("判题原则：\n");
+        sb.append("1. 以题目、参考答案、解析为准，允许同义表达、不同语序、常见近义词。\n");
+        sb.append("2. 学生答案如果与参考答案核心事实冲突、明显偏题、只答题干表面文字、答非所问，则判错。\n");
+        sb.append("3. 学生答案如果只覆盖部分关键点，score 低于 60，isCorrect 必须为 false。\n");
+        sb.append("4. 学生答案如果核心意思正确、知识点覆盖充分，即使措辞不同也可以判对。\n");
+        sb.append("5. 输出必须是 JSON 对象，不要 Markdown，不要代码块，不要任何额外解释。\n");
+        sb.append("6. JSON 格式严格为：{\"results\":[{\"qid\":\"题目ID\",\"score\":0,\"isCorrect\":false,\"reason\":\"简短理由\"}]}\n");
+        sb.append("7. qid 必须原样返回；reason 控制在 50 字以内，使用中文。\n\n");
+        sb.append("待判题数据（JSON 数组）：\n");
+        sb.append(items.toJSONString());
+        return sb.toString();
+    }
+
+    private JSONArray parseShortAnswerJudgeResults(String response) {
+        JSONArray empty = new JSONArray();
+        if (response == null || response.trim().isEmpty()) {
+            return empty;
+        }
+        String cleaned = response.replace("```json", "").replace("```", "").trim();
+        JSONArray parsed = tryParseJudgeArray(cleaned);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        String objectBlock = extractJsonBlock(cleaned, '{', '}');
+        parsed = tryParseJudgeArray(objectBlock);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        String arrayBlock = extractJsonBlock(cleaned, '[', ']');
+        parsed = tryParseJudgeArray(arrayBlock);
+        if (parsed != null) {
+            return parsed;
+        }
+
+        log.warn("简答题 AI 判分结果解析失败，原始响应：{}", cleaned);
+        return empty;
+    }
+
+    private JSONArray tryParseJudgeArray(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            Object parsed = JSON.parse(text.trim());
+            if (parsed instanceof JSONObject) {
+                return ((JSONObject) parsed).getJSONArray("results");
+            }
+            if (parsed instanceof JSONArray) {
+                return (JSONArray) parsed;
+            }
+        } catch (Exception ignored) {
+            // 继续尝试其他提取方式
+        }
+        return null;
+    }
+
+    private String extractJsonBlock(String text, char openChar, char closeChar) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        int start = text.indexOf(openChar);
+        int end = text.lastIndexOf(closeChar);
+        if (start >= 0 && end > start) {
+            return text.substring(start, end + 1).trim();
+        }
+        return "";
     }
 
     private String callTongYiAI(String prompt) {

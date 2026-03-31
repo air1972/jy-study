@@ -3,6 +3,7 @@ package com.jy.study.web.controller.web;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.jy.study.common.ai.TongYiAI;
 import com.jy.study.common.core.controller.BaseController;
 import com.jy.study.common.core.domain.AjaxResult;
@@ -22,6 +23,7 @@ import com.jy.study.lesson.service.IStudyLessonService;
 import com.jy.study.lesson.service.IStudyLessonExerciseService;
 import com.jy.study.lesson.service.IStudyKnowledgePointService;
 import com.jy.study.lesson.service.IStudyWrongAnswerService;
+import com.jy.study.web.util.AnswerJudgeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -29,6 +31,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -151,23 +155,56 @@ public class WebExerciseController extends BaseController {
         if (user == null) {
             return AjaxResult.error("请先登录");
         }
+
+        Map<Long, StudyExercise> exerciseMap = new LinkedHashMap<>();
+        for (StudyExerciseRecord record : records) {
+            if (record == null || record.getExerciseId() == null) {
+                continue;
+            }
+            exerciseMap.put(record.getExerciseId(), exerciseService.selectStudyExerciseById(record.getExerciseId()));
+        }
+        Map<Long, ShortAnswerJudgeDecision> aiJudgeMap = judgeStudyShortAnswersWithAi(records, exerciseMap);
         
         JSONObject result = new JSONObject();
         JSONArray details = new JSONArray();
         int correctCount = 0;
 
         for (StudyExerciseRecord record : records) {
+            if (record == null) {
+                continue;
+            }
             record.setUserId(user.getUserId());
-            StudyExercise exercise = exerciseService.selectStudyExerciseById(record.getExerciseId());
+            StudyExercise exercise = exerciseMap.get(record.getExerciseId());
+            String userAnswer = record.getUserAnswer() == null ? "" : record.getUserAnswer().trim();
+            record.setUserAnswer(userAnswer);
             
             JSONObject detail = new JSONObject();
             detail.put("exerciseId", record.getExerciseId());
+            detail.put("userAnswer", userAnswer);
+            detail.put("correctAnswer", "");
+            detail.put("explanation", "");
+            detail.put("isCorrect", false);
             
             if (exercise != null) {
                 detail.put("correctAnswer", exercise.getAnswer());
-                detail.put("explanation", exercise.getExplanation());
-                
-                if (exercise.getAnswer().equals(record.getUserAnswer())) {
+                String explanation = exercise.getExplanation();
+
+                boolean isCorrect = AnswerJudgeUtils.judgeStudyExerciseAnswer(
+                        exercise.getType(),
+                        exercise.getAnswer(),
+                        userAnswer,
+                        exercise.getOptions()
+                );
+                ShortAnswerJudgeDecision aiDecision = aiJudgeMap.get(record.getExerciseId());
+                if (!isCorrect && aiDecision != null) {
+                    isCorrect = aiDecision.correct;
+                    detail.put("gradingMethod", "ai");
+                    detail.put("aiScore", aiDecision.score);
+                    detail.put("aiJudgeReason", aiDecision.reason);
+                    explanation = mergeExplanationWithAiReason(explanation, aiDecision.reason);
+                }
+                detail.put("explanation", explanation);
+                if (isCorrect) {
                     record.setIsCorrect(1);
                     detail.put("isCorrect", true);
                     correctCount++;
@@ -206,6 +243,16 @@ public class WebExerciseController extends BaseController {
             return AjaxResult.error("提交内容为空");
         }
 
+        Map<Long, StudyLessonExercise> exerciseMap = new LinkedHashMap<>();
+        for (Map<String, Object> item : records) {
+            Long lessonExerciseId = toLong(item.get("exerciseId"));
+            if (lessonExerciseId == null) {
+                continue;
+            }
+            exerciseMap.put(lessonExerciseId, lessonExerciseService.selectStudyLessonExerciseById(lessonExerciseId));
+        }
+        Map<Long, ShortAnswerJudgeDecision> aiJudgeMap = judgeLessonShortAnswersWithAi(records, exerciseMap);
+
         JSONObject result = new JSONObject();
         JSONArray details = new JSONArray();
         int correctCount = 0;
@@ -228,7 +275,20 @@ public class WebExerciseController extends BaseController {
             if (exercise != null) {
                 correctAnswer = exercise.getAnswer() == null ? "" : exercise.getAnswer().trim();
                 analysis = exercise.getAnalysis();
-                isCorrect = judgeLessonAnswer(exercise.getExerciseType(), correctAnswer, userAnswer) ? 1 : 0;
+                isCorrect = AnswerJudgeUtils.judgeLessonExerciseAnswer(
+                        exercise.getExerciseType(),
+                        correctAnswer,
+                        userAnswer,
+                        exercise.getOptions()
+                ) ? 1 : 0;
+                ShortAnswerJudgeDecision aiDecision = aiJudgeMap.get(lessonExerciseId);
+                if (isCorrect == 0 && aiDecision != null) {
+                    isCorrect = aiDecision.correct ? 1 : 0;
+                    detail.put("gradingMethod", "ai");
+                    detail.put("aiScore", aiDecision.score);
+                    detail.put("aiJudgeReason", aiDecision.reason);
+                    analysis = mergeExplanationWithAiReason(analysis, aiDecision.reason);
+                }
             }
 
             Long storedId = toLessonRecordId(lessonExerciseId);
@@ -263,13 +323,6 @@ public class WebExerciseController extends BaseController {
     @GetMapping("/wrong-answer")
     public String wrongAnswer(ModelMap mmap) {
         SysUser user = getSysUser();
-        List<StudyWrongAnswer> list = java.util.Collections.emptyList();
-        if (user != null) {
-            StudyWrongAnswer wrongAnswer = new StudyWrongAnswer();
-            wrongAnswer.setUserId(user.getUserId());
-            list = purgeDeletedWrongAnswers(wrongAnswerService.selectStudyWrongAnswerList(wrongAnswer));
-        }
-        mmap.put("wrongAnswerList", list);
         mmap.put("needLogin", user == null);
         return "web/wrong_answer";
     }
@@ -279,15 +332,21 @@ public class WebExerciseController extends BaseController {
      */
     @GetMapping("/wrong-answer/list")
     @ResponseBody
-    public TableDataInfo wrongAnswerList(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum) {
+    public TableDataInfo wrongAnswerList(@RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+                                         @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize,
+                                         @RequestParam(value = "contentType", required = false) String contentType,
+                                         @RequestParam(value = "contentId", required = false) Long contentId) {
         SysUser user = getSysUser();
         if (user == null) {
             return getDataTable(java.util.Collections.emptyList());
         }
-        PageHelper.startPage(pageNum, 5);
+        wrongAnswerService.purgeInvalidWrongAnswers();
+        PageHelper.startPage(pageNum, pageSize);
         StudyWrongAnswer filter = new StudyWrongAnswer();
         filter.setUserId(user.getUserId());
-        List<StudyWrongAnswer> wrongList = purgeDeletedWrongAnswers(wrongAnswerService.selectStudyWrongAnswerList(filter));
+        filter.setSourceType(contentType);
+        filter.setSourceId(contentId);
+        List<StudyWrongAnswer> wrongList = wrongAnswerService.selectStudyWrongAnswerList(filter);
         List<java.util.Map<String, Object>> rows = new java.util.ArrayList<>();
         for (StudyWrongAnswer wa : wrongList) {
             java.util.Map<String, Object> item = new java.util.HashMap<>();
@@ -295,42 +354,40 @@ public class WebExerciseController extends BaseController {
             item.put("exerciseId", wa.getExerciseId());
             item.put("wrongCount", wa.getWrongCount());
             item.put("lastWrongTime", wa.getLastWrongTime());
-            if (isLessonRecordId(wa.getExerciseId())) {
-                Long lessonExerciseId = toLessonExerciseId(wa.getExerciseId());
-                StudyLessonExercise ex = lessonExerciseService.selectStudyLessonExerciseById(lessonExerciseId);
-                if (ex != null) {
-                    item.put("content", ex.getTitle());
-                    item.put("type", ex.getExerciseType());
-                    item.put("answer", ex.getAnswer());
-                    item.put("explanation", ex.getAnalysis());
-                    item.put("knowledgePointId", null);
-                }
-            } else {
-                StudyExercise ex = exerciseService.selectStudyExerciseById(wa.getExerciseId());
-                if (ex != null) {
-                    item.put("content", ex.getContent());
-                    item.put("type", ex.getType());
-                    item.put("answer", ex.getAnswer());
-                    item.put("explanation", ex.getExplanation());
-                    item.put("knowledgePointId", ex.getKnowledgePointId());
-                }
-            }
+            item.put("content", wa.getContent());
+            item.put("type", wa.getType());
+            item.put("answer", wa.getAnswer());
+            item.put("explanation", wa.getExplanation());
+            item.put("knowledgePointId", wa.getKnowledgePointId());
+            item.put("knowledgePointName", wa.getKnowledgePointName());
+            item.put("sourceType", wa.getSourceType());
+            item.put("sourceId", wa.getSourceId());
+            item.put("sourceTitle", wa.getSourceTitle());
+            item.put("typeName", resolveWrongAnswerTypeName(wa));
             rows.add(item);
         }
-        return getDataTable(rows);
+        TableDataInfo rspData = new TableDataInfo();
+        rspData.setCode(0);
+        rspData.setRows(rows);
+        rspData.setTotal(new PageInfo<>(wrongList).getTotal());
+        return rspData;
     }
 
     @GetMapping("/wrong-answer/suggestion")
     @ResponseBody
-    public AjaxResult wrongAnswerSuggestion() {
+    public AjaxResult wrongAnswerSuggestion(@RequestParam(value = "contentType", required = false) String contentType,
+                                            @RequestParam(value = "contentId", required = false) Long contentId) {
         SysUser user = getSysUser();
         if (user == null) {
             return AjaxResult.error("请先登录");
         }
 
+        wrongAnswerService.purgeInvalidWrongAnswers();
         StudyWrongAnswer filter = new StudyWrongAnswer();
         filter.setUserId(user.getUserId());
-        List<StudyWrongAnswer> wrongList = purgeDeletedWrongAnswers(wrongAnswerService.selectStudyWrongAnswerList(filter));
+        filter.setSourceType(contentType);
+        filter.setSourceId(contentId);
+        List<StudyWrongAnswer> wrongList = wrongAnswerService.selectStudyWrongAnswerList(filter);
         if (wrongList == null || wrongList.isEmpty()) {
             return AjaxResult.success("暂无错题记录，建议从任意知识点进入练习，系统会自动统计薄弱点。");
         }
@@ -340,55 +397,25 @@ public class WebExerciseController extends BaseController {
                 .limit(12)
                 .collect(Collectors.toList());
 
-        StringBuilder ctx = new StringBuilder();
-        for (StudyWrongAnswer wa : topList) {
-            String kpName = "";
-            String question = "";
-            String answer = "";
-            String explanation = "";
-            if (isLessonRecordId(wa.getExerciseId())) {
-                Long lessonExerciseId = toLessonExerciseId(wa.getExerciseId());
-                StudyLessonExercise ex = lessonExerciseService.selectStudyLessonExerciseById(lessonExerciseId);
-                if (ex == null) {
-                    continue;
-                }
-                question = ex.getTitle();
-                answer = ex.getAnswer();
-                explanation = ex.getAnalysis();
-            } else {
-                StudyExercise ex = exerciseService.selectStudyExerciseById(wa.getExerciseId());
-                if (ex == null) {
-                    continue;
-                }
-                question = ex.getContent();
-                answer = ex.getAnswer();
-                explanation = ex.getExplanation();
-                if (ex.getKnowledgePointId() != null) {
-                    StudyKnowledgePoint kpQuery = new StudyKnowledgePoint();
-                    kpQuery.setId(ex.getKnowledgePointId());
-                    List<StudyKnowledgePoint> kpList = knowledgePointService.selectStudyKnowledgePointList(kpQuery);
-                    if (kpList != null && !kpList.isEmpty()) {
-                        kpName = kpList.get(0).getName();
-                    }
-                }
-            }
-            ctx.append("【知识点】").append(kpName == null ? "" : kpName).append("\n");
-            ctx.append("【题目】").append(question == null ? "" : question).append("\n");
-            ctx.append("【正确答案】").append(answer == null ? "" : answer).append("\n");
-            ctx.append("【解析】").append(explanation == null ? "" : explanation).append("\n");
-            ctx.append("【错误次数】").append(wa.getWrongCount() == null ? 0 : wa.getWrongCount()).append("\n");
-            ctx.append("----\n");
+        List<WrongAnswerSuggestionItem> suggestionItems = buildWrongAnswerSuggestionItems(topList);
+        if (suggestionItems.isEmpty()) {
+            return AjaxResult.success("当前错题缺少可分析的题目信息，建议先重新完成几道练习后再生成学习建议。");
         }
+
+        String ctx = buildWrongAnswerSuggestionContext(suggestionItems);
 
         String suggestion;
         try {
-            suggestion = tongYiAI.generateWrongAnswerSuggestion(ctx.toString());
+            suggestion = tongYiAI.generateWrongAnswerSuggestion(ctx);
         } catch (Exception e) {
             logger.error("生成千问学习建议失败", e);
-            return AjaxResult.error("千问建议生成失败，请稍后重试");
+            suggestion = "";
         }
-        if (suggestion != null) {
-            suggestion = suggestion.replace("```", "").trim();
+
+        suggestion = sanitizeSuggestionText(suggestion);
+        if (isBlank(suggestion)) {
+            logger.warn("千问学习建议为空，已切换为本地兜底建议，userId={}", user.getUserId());
+            suggestion = buildFallbackWrongAnswerSuggestion(suggestionItems);
         }
         return AjaxResult.success(suggestion);
     }
@@ -396,32 +423,6 @@ public class WebExerciseController extends BaseController {
     /**
      * 自动清理已删除题目的错题记录，避免前端显示“题目已删除”。
      */
-    private List<StudyWrongAnswer> purgeDeletedWrongAnswers(List<StudyWrongAnswer> wrongList) {
-        if (wrongList == null || wrongList.isEmpty()) {
-            return wrongList == null ? java.util.Collections.emptyList() : wrongList;
-        }
-        List<Long> deleteIds = new ArrayList<>();
-        List<StudyWrongAnswer> validList = new ArrayList<>();
-        for (StudyWrongAnswer wa : wrongList) {
-            boolean exists;
-            if (isLessonRecordId(wa.getExerciseId())) {
-                Long lessonExerciseId = toLessonExerciseId(wa.getExerciseId());
-                exists = lessonExerciseService.selectStudyLessonExerciseById(lessonExerciseId) != null;
-            } else {
-                exists = exerciseService.selectStudyExerciseById(wa.getExerciseId()) != null;
-            }
-            if (exists) {
-                validList.add(wa);
-            } else if (wa.getId() != null) {
-                deleteIds.add(wa.getId());
-            }
-        }
-        if (!deleteIds.isEmpty()) {
-            wrongAnswerService.deleteStudyWrongAnswerByIds(deleteIds);
-        }
-        return validList;
-    }
-
     @GetMapping("/detail/{id}")
     @ResponseBody
     public AjaxResult detailWithLessonFallback(@PathVariable("id") Long id) {
@@ -449,50 +450,392 @@ public class WebExerciseController extends BaseController {
         return AjaxResult.error("未找到相关题目");
     }
 
-    private boolean judgeLessonAnswer(String type, String expected, String actual) {
-        String exp = expected == null ? "" : expected.trim();
-        String ans = actual == null ? "" : actual.trim();
-        if ("4".equals(type)) {
-            return normalizeText(exp).equals(normalizeText(ans));
+    private Map<Long, ShortAnswerJudgeDecision> judgeStudyShortAnswersWithAi(List<StudyExerciseRecord> records,
+                                                                             Map<Long, StudyExercise> exerciseMap) {
+        List<ShortAnswerJudgeCandidate> candidates = new ArrayList<>();
+        for (StudyExerciseRecord record : records) {
+            if (record == null || record.getExerciseId() == null) {
+                continue;
+            }
+            StudyExercise exercise = exerciseMap.get(record.getExerciseId());
+            if (exercise == null || !"4".equals(exercise.getType())) {
+                continue;
+            }
+            String userAnswer = safeTrim(record.getUserAnswer());
+            if (isBlank(userAnswer) || isBlank(exercise.getAnswer())) {
+                continue;
+            }
+            boolean ruleCorrect = AnswerJudgeUtils.judgeStudyExerciseAnswer(
+                    exercise.getType(),
+                    exercise.getAnswer(),
+                    userAnswer,
+                    exercise.getOptions()
+            );
+            if (ruleCorrect) {
+                continue;
+            }
+            candidates.add(new ShortAnswerJudgeCandidate(
+                    record.getExerciseId(),
+                    exercise.getSubjectName(),
+                    exercise.getGradeName(),
+                    exercise.getContent(),
+                    exercise.getAnswer(),
+                    exercise.getExplanation(),
+                    userAnswer
+            ));
         }
-        if ("3".equals(type)) {
-            return normalizeTf(exp).equals(normalizeTf(ans));
-        }
-        if ("1".equals(type) || "2".equals(type)) {
-            return normalizeChoice(exp).equals(normalizeChoice(ans));
-        }
-        return normalizeText(exp).equals(normalizeText(ans));
+        return judgeShortAnswerCandidatesWithAi(candidates);
     }
 
-    private String normalizeTf(String s) {
-        String v = normalizeText(s);
-        if ("true".equals(v) || "t".equals(v) || "1".equals(v) || "对".equals(v) || "正确".equals(v) || "√".equals(v)) {
-            return "对";
+    private Map<Long, ShortAnswerJudgeDecision> judgeLessonShortAnswersWithAi(List<Map<String, Object>> records,
+                                                                              Map<Long, StudyLessonExercise> exerciseMap) {
+        List<ShortAnswerJudgeCandidate> candidates = new ArrayList<>();
+        for (Map<String, Object> item : records) {
+            Long lessonExerciseId = toLong(item.get("exerciseId"));
+            if (lessonExerciseId == null) {
+                continue;
+            }
+            StudyLessonExercise exercise = exerciseMap.get(lessonExerciseId);
+            if (exercise == null || !"4".equals(exercise.getExerciseType())) {
+                continue;
+            }
+            String userAnswer = item.get("userAnswer") == null ? "" : String.valueOf(item.get("userAnswer")).trim();
+            if (isBlank(userAnswer) || isBlank(exercise.getAnswer())) {
+                continue;
+            }
+            boolean ruleCorrect = AnswerJudgeUtils.judgeLessonExerciseAnswer(
+                    exercise.getExerciseType(),
+                    exercise.getAnswer(),
+                    userAnswer,
+                    exercise.getOptions()
+            );
+            if (ruleCorrect) {
+                continue;
+            }
+            candidates.add(new ShortAnswerJudgeCandidate(
+                    lessonExerciseId,
+                    exercise.getSubjectName(),
+                    exercise.getGradeName(),
+                    exercise.getTitle(),
+                    exercise.getAnswer(),
+                    exercise.getAnalysis(),
+                    userAnswer
+            ));
         }
-        if ("false".equals(v) || "f".equals(v) || "0".equals(v) || "错".equals(v) || "错误".equals(v) || "×".equals(v)) {
-            return "错";
-        }
-        return v;
+        return judgeShortAnswerCandidatesWithAi(candidates);
     }
 
-    private String normalizeChoice(String s) {
-        String v = (s == null ? "" : s).toUpperCase().replaceAll("[，、;\\s]+", ",");
-        if (v.matches("^[A-Z]+$") && v.length() > 1) {
-            v = String.join(",", v.split(""));
+    private Map<Long, ShortAnswerJudgeDecision> judgeShortAnswerCandidatesWithAi(List<ShortAnswerJudgeCandidate> candidates) {
+        Map<Long, ShortAnswerJudgeDecision> result = new HashMap<>();
+        if (candidates == null || candidates.isEmpty()) {
+            return result;
         }
-        String[] parts = v.split(",");
-        List<String> list = new ArrayList<>();
-        for (String p : parts) {
-            if (p != null && !p.trim().isEmpty()) {
-                list.add(p.trim());
+
+        JSONArray requestItems = new JSONArray();
+        for (ShortAnswerJudgeCandidate candidate : candidates) {
+            JSONObject item = new JSONObject();
+            item.put("qid", String.valueOf(candidate.exerciseId));
+            item.put("subject", safeTrim(candidate.subjectName));
+            item.put("grade", safeTrim(candidate.gradeName));
+            item.put("question", safeTrim(candidate.question));
+            item.put("referenceAnswer", safeTrim(candidate.referenceAnswer));
+            item.put("analysis", safeTrim(candidate.analysis));
+            item.put("userAnswer", safeTrim(candidate.userAnswer));
+            requestItems.add(item);
+        }
+
+        try {
+            JSONArray aiResults = tongYiAI.judgeShortAnswerBatch(requestItems);
+            for (int i = 0; i < aiResults.size(); i++) {
+                JSONObject item = aiResults.getJSONObject(i);
+                if (item == null) {
+                    continue;
+                }
+                Long exerciseId = toLong(item.get("qid"));
+                if (exerciseId == null) {
+                    continue;
+                }
+                ShortAnswerJudgeDecision decision = new ShortAnswerJudgeDecision();
+                decision.score = normalizeAiScore(item.getInteger("score"));
+                decision.correct = resolveAiCorrect(item.get("isCorrect"), decision.score);
+                decision.reason = normalizeAiReason(item.getString("reason"));
+                result.put(exerciseId, decision);
+            }
+        } catch (Exception e) {
+            logger.error("AI 简答题辅助判分失败", e);
+        }
+        return result;
+    }
+
+    private boolean resolveAiCorrect(Object rawValue, Integer score) {
+        if (rawValue instanceof Boolean) {
+            return (Boolean) rawValue;
+        }
+        if (rawValue != null) {
+            String value = String.valueOf(rawValue).trim().toLowerCase();
+            if ("true".equals(value) || "1".equals(value) || "yes".equals(value) || "y".equals(value) || "是".equals(value)) {
+                return true;
+            }
+            if ("false".equals(value) || "0".equals(value) || "no".equals(value) || "n".equals(value) || "否".equals(value)) {
+                return false;
             }
         }
-        list.sort(String::compareTo);
-        return String.join(",", list);
+        return score != null && score >= 60;
     }
 
-    private String normalizeText(String s) {
-        return s == null ? "" : s.toLowerCase().replaceAll("\\s+", "");
+    private Integer normalizeAiScore(Integer score) {
+        if (score == null) {
+            return null;
+        }
+        if (score < 0) {
+            return 0;
+        }
+        if (score > 100) {
+            return 100;
+        }
+        return score;
+    }
+
+    private String mergeExplanationWithAiReason(String explanation, String aiReason) {
+        String base = safeTrim(explanation);
+        String reason = normalizeAiReason(aiReason);
+        if (reason.isEmpty()) {
+            return base;
+        }
+        if (base.isEmpty()) {
+            return "AI判分说明：" + reason;
+        }
+        return base + " AI判分说明：" + reason;
+    }
+
+    private String normalizeAiReason(String reason) {
+        if (reason == null) {
+            return "";
+        }
+        return reason.replaceAll("<[^>]+>", "")
+                .replaceAll("[\\r\\n]+", " ")
+                .trim();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private List<WrongAnswerSuggestionItem> buildWrongAnswerSuggestionItems(List<StudyWrongAnswer> wrongList) {
+        List<WrongAnswerSuggestionItem> items = new ArrayList<>();
+        if (wrongList == null || wrongList.isEmpty()) {
+            return items;
+        }
+        for (StudyWrongAnswer wa : wrongList) {
+            if (wa == null || wa.getExerciseId() == null) {
+                continue;
+            }
+            WrongAnswerSuggestionItem item = new WrongAnswerSuggestionItem();
+            item.exerciseId = wa.getExerciseId();
+            item.wrongCount = wa.getWrongCount() == null ? 0 : wa.getWrongCount();
+            item.lastWrongTime = wa.getLastWrongTime() == null ? "" : wa.getLastWrongTime().toString();
+            item.question = safeTrim(wa.getContent());
+            item.answer = safeTrim(wa.getAnswer());
+            item.explanation = safeTrim(wa.getExplanation());
+            item.knowledgePoint = safeTrim(wa.getKnowledgePointName());
+            item.subjectName = "";
+            item.gradeName = "";
+            item.typeName = resolveWrongAnswerTypeName(wa);
+            item.sourceName = safeTrim(wa.getSourceTitle());
+
+            if (!isBlank(item.question) && !isBlank(item.answer)) {
+                items.add(item);
+                continue;
+            }
+
+            if (isLessonRecordId(wa.getExerciseId())) {
+                Long lessonExerciseId = toLessonExerciseId(wa.getExerciseId());
+                StudyLessonExercise ex = lessonExerciseService.selectStudyLessonExerciseById(lessonExerciseId);
+                if (ex == null) {
+                    continue;
+                }
+                item.question = safeTrim(ex.getTitle());
+                item.answer = safeTrim(ex.getAnswer());
+                item.explanation = safeTrim(ex.getAnalysis());
+                item.knowledgePoint = safeTrim(ex.getLessonTitle());
+                item.subjectName = safeTrim(ex.getSubjectName());
+                item.gradeName = safeTrim(ex.getGradeName());
+                item.typeName = getLessonExerciseTypeName(ex.getExerciseType());
+                item.sourceName = safeTrim(ex.getLessonTitle());
+            } else {
+                StudyExercise ex = exerciseService.selectStudyExerciseById(wa.getExerciseId());
+                if (ex == null) {
+                    continue;
+                }
+                item.question = safeTrim(ex.getContent());
+                item.answer = safeTrim(ex.getAnswer());
+                item.explanation = safeTrim(ex.getExplanation());
+                item.subjectName = safeTrim(ex.getSubjectName());
+                item.gradeName = safeTrim(ex.getGradeName());
+                item.typeName = getStudyExerciseTypeName(ex.getType());
+                item.sourceName = "";
+                if (ex.getKnowledgePointId() != null) {
+                    StudyKnowledgePoint kpQuery = new StudyKnowledgePoint();
+                    kpQuery.setId(ex.getKnowledgePointId());
+                    List<StudyKnowledgePoint> kpList = knowledgePointService.selectStudyKnowledgePointList(kpQuery);
+                    if (kpList != null && !kpList.isEmpty()) {
+                        item.knowledgePoint = safeTrim(kpList.get(0).getName());
+                    }
+                }
+            }
+            items.add(item);
+        }
+        return items;
+    }
+
+    private String resolveWrongAnswerTypeName(StudyWrongAnswer wa) {
+        if (wa == null) {
+            return "未知题型";
+        }
+        if ("lesson".equalsIgnoreCase(safeTrim(wa.getSourceType())) || isLessonRecordId(wa.getExerciseId())) {
+            return getLessonExerciseTypeName(wa.getType());
+        }
+        return getStudyExerciseTypeName(wa.getType());
+    }
+
+    private String buildWrongAnswerSuggestionContext(List<WrongAnswerSuggestionItem> items) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("【总体情况】\n");
+        ctx.append("错题数量：").append(items.size()).append("\n");
+
+        Map<String, Integer> focusMap = buildFocusCountMap(items);
+        if (!focusMap.isEmpty()) {
+            ctx.append("高频薄弱点：").append(joinTopLabels(focusMap, 3)).append("\n");
+        }
+        ctx.append("\n【错题详情】\n");
+
+        for (WrongAnswerSuggestionItem item : items) {
+            ctx.append("【题目ID】").append(item.exerciseId).append("\n");
+            ctx.append("【学科】").append(item.subjectName).append("\n");
+            ctx.append("【年级】").append(item.gradeName).append("\n");
+            ctx.append("【来源】").append(item.sourceName).append("\n");
+            ctx.append("【知识点】").append(item.knowledgePoint).append("\n");
+            ctx.append("【题型】").append(item.typeName).append("\n");
+            ctx.append("【题目】").append(item.question).append("\n");
+            ctx.append("【正确答案】").append(item.answer).append("\n");
+            ctx.append("【解析】").append(item.explanation).append("\n");
+            ctx.append("【错误次数】").append(item.wrongCount).append("\n");
+            ctx.append("【最近答错时间】").append(item.lastWrongTime).append("\n");
+            ctx.append("----\n");
+        }
+        return ctx.toString();
+    }
+
+    private Map<String, Integer> buildFocusCountMap(List<WrongAnswerSuggestionItem> items) {
+        Map<String, Integer> counter = new LinkedHashMap<>();
+        for (WrongAnswerSuggestionItem item : items) {
+            String label = !isBlank(item.knowledgePoint) ? item.knowledgePoint
+                    : (!isBlank(item.subjectName) ? item.subjectName + item.typeName : item.typeName);
+            if (isBlank(label)) {
+                label = "综合基础";
+            }
+            counter.put(label, counter.getOrDefault(label, 0) + Math.max(1, item.wrongCount));
+        }
+        return counter.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private String joinTopLabels(Map<String, Integer> counter, int limit) {
+        List<String> labels = new ArrayList<>();
+        int index = 0;
+        for (Map.Entry<String, Integer> entry : counter.entrySet()) {
+            labels.add(entry.getKey() + "（" + entry.getValue() + "次）");
+            index++;
+            if (index >= limit) {
+                break;
+            }
+        }
+        return String.join("、", labels);
+    }
+
+    private String sanitizeSuggestionText(String suggestion) {
+        if (suggestion == null) {
+            return "";
+        }
+        return suggestion.replace("```json", "")
+                .replace("```", "")
+                .trim();
+    }
+
+    private String buildFallbackWrongAnswerSuggestion(List<WrongAnswerSuggestionItem> items) {
+        Map<String, Integer> focusMap = buildFocusCountMap(items);
+        String focusText = focusMap.isEmpty() ? "综合基础" : joinTopLabels(focusMap, 3);
+        WrongAnswerSuggestionItem topItem = items.get(0);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("现状诊断：你当前累计有 ").append(items.size()).append(" 道高频错题，主要薄弱点集中在 ")
+                .append(focusText).append("。")
+                .append("其中最需要优先处理的一题是“").append(safeTrim(topItem.question)).append("”，")
+                .append("这类题已经重复出错 ").append(topItem.wrongCount).append(" 次。\n\n");
+
+        sb.append("优先复习知识点：先回到 ")
+                .append(isBlank(topItem.knowledgePoint) ? "对应教材与解析" : topItem.knowledgePoint)
+                .append("，把标准答案、题目关键词和解析里的因果关系重新整理一遍。");
+        if (!isBlank(topItem.subjectName)) {
+            sb.append("本轮建议重点复习 ").append(topItem.subjectName);
+            if (!isBlank(topItem.gradeName)) {
+                sb.append(" ").append(topItem.gradeName);
+            }
+            sb.append(" 相关基础内容。");
+        }
+        sb.append("\n\n");
+
+        sb.append("建议练习计划：接下来 3 天每天安排 20 到 30 分钟复盘。")
+                .append("先精读 2 道错题解析，再口头复述正确思路，最后重新做 3 道同类型题。")
+                .append("如果是简答题，每次作答都按“结论 + 关键词 + 简短依据”三步写满；")
+                .append("如果是选择或判断题，要把干扰项为什么错也一并写出来。\n\n");
+
+        sb.append("注意事项：不要只看答案，要先自己回忆再核对；")
+                .append("同一题连续错 2 次以上时，说明不是粗心而是知识点没吃透，必须回教材或课程原文重学。")
+                .append("做完新练习后，把仍然出错的题继续加入错题本，下一次优先复盘。");
+        return sb.toString();
+    }
+
+    private String getStudyExerciseTypeName(String type) {
+        if ("1".equals(type)) {
+            return "选择题";
+        }
+        if ("2".equals(type)) {
+            return "填空题";
+        }
+        if ("3".equals(type)) {
+            return "判断题";
+        }
+        if ("4".equals(type)) {
+            return "简答题";
+        }
+        return "未知题型";
+    }
+
+    private String getLessonExerciseTypeName(String type) {
+        if ("1".equals(type)) {
+            return "单选题";
+        }
+        if ("2".equals(type)) {
+            return "多选题";
+        }
+        if ("3".equals(type)) {
+            return "判断题";
+        }
+        if ("4".equals(type)) {
+            return "简答题";
+        }
+        return "未知题型";
     }
 
     private Long toLong(Object value) {
@@ -519,5 +862,46 @@ public class WebExerciseController extends BaseController {
 
     private Long toLessonExerciseId(Long exerciseId) {
         return exerciseId == null ? null : Math.abs(exerciseId);
+    }
+
+    private static class ShortAnswerJudgeCandidate {
+        private final Long exerciseId;
+        private final String subjectName;
+        private final String gradeName;
+        private final String question;
+        private final String referenceAnswer;
+        private final String analysis;
+        private final String userAnswer;
+
+        private ShortAnswerJudgeCandidate(Long exerciseId, String subjectName, String gradeName, String question,
+                                          String referenceAnswer, String analysis, String userAnswer) {
+            this.exerciseId = exerciseId;
+            this.subjectName = subjectName;
+            this.gradeName = gradeName;
+            this.question = question;
+            this.referenceAnswer = referenceAnswer;
+            this.analysis = analysis;
+            this.userAnswer = userAnswer;
+        }
+    }
+
+    private static class ShortAnswerJudgeDecision {
+        private boolean correct;
+        private Integer score;
+        private String reason;
+    }
+
+    private static class WrongAnswerSuggestionItem {
+        private Long exerciseId;
+        private String subjectName = "";
+        private String gradeName = "";
+        private String sourceName = "";
+        private String knowledgePoint = "";
+        private String typeName = "";
+        private String question = "";
+        private String answer = "";
+        private String explanation = "";
+        private Integer wrongCount = 0;
+        private String lastWrongTime = "";
     }
 }

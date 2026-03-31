@@ -5,6 +5,7 @@ import com.jy.study.common.core.controller.BaseController;
 import com.jy.study.common.core.domain.AjaxResult;
 import com.jy.study.common.core.page.TableDataInfo;
 import com.jy.study.common.enums.BusinessType;
+import com.github.pagehelper.PageInfo;
 import com.jy.study.lesson.domain.StudyExercise;
 import com.jy.study.lesson.domain.StudyLessonExercise;
 import com.jy.study.lesson.domain.StudyWrongAnswer;
@@ -87,7 +88,11 @@ public class WrongAnswerController extends BaseController {
             }
             rows.add(item);
         }
-        return getDataTable(rows);
+        TableDataInfo rspData = new TableDataInfo();
+        rspData.setCode(0);
+        rspData.setRows(rows);
+        rspData.setTotal(new PageInfo<>(list).getTotal());
+        return rspData;
     }
 
     /**

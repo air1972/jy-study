@@ -11,22 +11,103 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="wrongCount"    column="wrong_count"    />
         <result property="lastWrongTime"    column="last_wrong_time"    />
         <result property="createTime"    column="create_time"    />
+        <result property="sourceType"    column="source_type"    />
+        <result property="sourceId"    column="source_id"    />
+        <result property="sourceTitle"    column="source_title"    />
+        <result property="knowledgePointId"    column="knowledge_point_id"    />
+        <result property="knowledgePointName"    column="knowledge_point_name"    />
+        <result property="content"    column="content"    />
+        <result property="type"    column="exercise_type"    />
+        <result property="answer"    column="answer_content"    />
+        <result property="explanation"    column="explanation_content"    />
     </resultMap>
 
     <sql id="selectStudyWrongAnswerVo">
-        select id, user_id, exercise_id, wrong_count, last_wrong_time, create_time from study_wrong_answer
+        select wa.id,
+               wa.user_id,
+               wa.exercise_id,
+               wa.wrong_count,
+               wa.last_wrong_time,
+               wa.create_time,
+               case
+                   when wa.exercise_id &lt; 0 then 'lesson'
+                   else kp.content_type
+               end as source_type,
+               case
+                   when wa.exercise_id &lt; 0 then le.lesson_id
+                   else kp.content_id
+               end as source_id,
+               case
+                   when wa.exercise_id &lt; 0 then l.title
+                   else kp.source_title
+               end as source_title,
+               case
+                   when wa.exercise_id &lt; 0 then null
+                   else e.knowledge_point_id
+               end as knowledge_point_id,
+               case
+                   when wa.exercise_id &lt; 0 then l.title
+                   else kp.name
+               end as knowledge_point_name,
+               case
+                   when wa.exercise_id &lt; 0 then le.title
+                   else e.content
+               end as content,
+               case
+                   when wa.exercise_id &lt; 0 then le.exercise_type
+                   else e.type
+               end as exercise_type,
+               case
+                   when wa.exercise_id &lt; 0 then le.answer
+                   else e.answer
+               end as answer_content,
+               case
+                   when wa.exercise_id &lt; 0 then le.analysis
+                   else e.explanation
+               end as explanation_content
+          from study_wrong_answer wa
+          left join study_exercise e
+            on wa.exercise_id &gt; 0
+           and e.id = wa.exercise_id
+          left join study_knowledge_point kp
+            on e.knowledge_point_id = kp.id
+          left join study_lesson_exercise le
+            on wa.exercise_id &lt; 0
+           and le.exercise_id = -wa.exercise_id
+          left join study_lesson l
+            on le.lesson_id = l.lesson_id
     </sql>
 
     <select id="selectStudyWrongAnswerList" parameterType="StudyWrongAnswer" resultMap="StudyWrongAnswerResult">
         <include refid="selectStudyWrongAnswerVo"/>
         <where>
-            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="userId != null "> and wa.user_id = #{userId}</if>
+            and (
+                (wa.exercise_id &gt; 0 and e.id is not null)
+                or
+                (wa.exercise_id &lt; 0 and le.exercise_id is not null)
+            )
+            <if test="sourceType != null and sourceType != ''">
+                and (
+                    (wa.exercise_id &lt; 0 and #{sourceType} = 'lesson')
+                    or
+                    (wa.exercise_id &gt; 0 and kp.content_type = #{sourceType})
+                )
+            </if>
+            <if test="sourceId != null">
+                and (
+                    (wa.exercise_id &lt; 0 and le.lesson_id = #{sourceId})
+                    or
+                    (wa.exercise_id &gt; 0 and kp.content_id = #{sourceId})
+                )
+            </if>
         </where>
+        order by wa.last_wrong_time desc, wa.id desc
     </select>
 
     <select id="selectStudyWrongAnswerByUserIdAndExerciseId" resultMap="StudyWrongAnswerResult">
         <include refid="selectStudyWrongAnswerVo"/>
-        where user_id = #{userId} and exercise_id = #{exerciseId}
+        where wa.user_id = #{userId} and wa.exercise_id = #{exerciseId}
     </select>
     
     <insert id="insertStudyWrongAnswer" parameterType="StudyWrongAnswer" useGeneratedKeys="true" keyProperty="id">

@@ -1,12 +1,89 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" >
 <head>
-	<th:block th:include="include :: header('修改密码')" />
+	<th:block th:include="include :: header('密码管理')" />
+    <style>
+        .password-panel {
+            border: 1px solid #e7eaec;
+            border-radius: 8px;
+            background: #f8fbff;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+        }
+        .password-panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2d3d;
+            margin-bottom: 12px;
+        }
+        .password-meta {
+            margin: 0;
+            color: #5b6573;
+            line-height: 1.9;
+        }
+        .password-meta strong {
+            color: #1f2d3d;
+        }
+        .password-status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .password-status-badge.warning {
+            background: #fff5d9;
+            color: #b7791f;
+        }
+        .password-status-badge.primary {
+            background: #e8f3ff;
+            color: #246bce;
+        }
+        .password-status-badge.default {
+            background: #eef1f5;
+            color: #6c757d;
+        }
+        .password-action-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .password-tip {
+            margin-top: 8px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body class="white-bg">
 	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
 		<form class="form-horizontal m" id="form-user-resetPwd">
 			<input name="userId"  type="hidden"  th:value="${user.userId}" />
+            <input type="hidden" id="initPasswordValue" th:value="${initPassword}" />
+            <div class="password-panel">
+                <div class="password-panel-title">密码状态</div>
+                <p class="password-meta">
+                    <strong>当前状态：</strong>
+                    <span class="password-status-badge"
+                          th:classappend="${passwordStatusClass == 'label-warning' ? 'warning' : (passwordStatusClass == 'label-default' ? 'default' : 'primary')}"
+                          th:text="${passwordStatusText}">当前仍使用初始密码</span>
+                </p>
+                <p class="password-meta">
+                    <strong>最后改密时间：</strong>
+                    <span th:text="${user.pwdUpdateDate != null ? #dates.format(user.pwdUpdateDate, 'yyyy-MM-dd HH:mm:ss') : '未记录'}">未记录</span>
+                </p>
+                <p class="password-meta">
+                    <strong>加密摘要：</strong>
+                    <span th:text="${passwordDigestPreview}">******</span>
+                </p>
+                <p class="password-tip" th:if="${canDisplayRawPassword}">
+                    当前密码仍是系统初始密码，所以这次可以直接显示原始值。
+                </p>
+                <p class="password-tip" th:unless="${canDisplayRawPassword}">
+                    当前密码已经是加密保存状态，系统无法反向还原原始密码，但你可以直接为该用户设置一个新密码。
+                </p>
+            </div>
 			<div class="form-group">
 				<label class="col-sm-3 control-label">登录名称：</label>
 				<div class="col-sm-8">
@@ -14,20 +91,73 @@
 				</div>
 			</div>
 			<div class="form-group">
-				<label class="col-sm-3 control-label">输入密码：</label>
+				<label class="col-sm-3 control-label">当前密码：</label>
+				<div class="col-sm-8">
+                    <div class="input-group" th:if="${canDisplayRawPassword}">
+                        <input class="form-control" type="password" id="currentPasswordDisplay" readonly th:value="${currentPasswordDisplay}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="togglePasswordInput('currentPasswordDisplay', this)">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </span>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="copyPasswordValue('currentPasswordDisplay')">
+                                <i class="fa fa-copy"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <input class="form-control" type="text" readonly th:unless="${canDisplayRawPassword}" th:value="${currentPasswordDisplay}">
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">新密码：</label>
 				<div class="col-sm-8">
 					<div class="input-group">
-                        <input class="form-control" type="password" name="password" id="password" placeholder="请输入重置密码" th:value="${@config.getKey('sys.user.initPassword')}">
-                        <span class="input-group-addon" title="重置密码,鼠标按下显示密码"
-                            onmousedown="$('#password').attr('type','text')"
-                            onmouseup="$('#password').attr('type','password')"><i class="fa fa-key"></i></span>
+                        <input class="form-control" type="password" name="password" id="password" placeholder="请输入新密码">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="togglePasswordInput('password', this)">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </span>
                     </div>
+                    <div class="password-action-row">
+                        <button type="button" class="btn btn-white btn-sm" onclick="fillInitPassword()">
+                            <i class="fa fa-history"></i> 设为初始密码
+                        </button>
+                        <button type="button" class="btn btn-white btn-sm" onclick="copyPasswordValue('password')">
+                            <i class="fa fa-copy"></i> 复制新密码
+                        </button>
+                    </div>
+                    <th:block th:with="chrtype=${@config.getKey('sys.account.chrtype')}">
+                        <th:block th:if="${chrtype != '0'}">
+                            <span class="help-block m-b-none">
+                                <th:block th:if="${chrtype == '1'}"><i class="fa fa-info-circle" style="color: red;"></i>  密码只能为0-9数字 </th:block>
+                                <th:block th:if="${chrtype == '2'}"><i class="fa fa-info-circle" style="color: red;"></i>  密码只能为a-z和A-Z字母</th:block>
+                                <th:block th:if="${chrtype == '3'}"><i class="fa fa-info-circle" style="color: red;"></i>  密码必须包含（字母，数字）</th:block>
+                                <th:block th:if="${chrtype == '4'}"><i class="fa fa-info-circle" style="color: red;"></i>  密码必须包含（字母，数字，特殊字符!@#$%^&*()-=_+）</th:block>
+                            </span>
+                        </th:block>
+                    </th:block>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label">确认密码：</label>
+				<div class="col-sm-8">
+					<div class="input-group">
+                        <input class="form-control" type="password" name="confirmPassword" id="confirmPassword" placeholder="请再次输入新密码">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="togglePasswordInput('confirmPassword', this)">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        </span>
+                    </div>
+                    <span class="help-block m-b-none"><i class="fa fa-info-circle"></i> 修改后将立即覆盖旧密码。</span>
 				</div>
 			</div>
 		</form>
 	</div>
 	<th:block th:include="include :: footer" />
-	<script type="text/javascript">
+	<script th:inline="javascript">
 		$("#form-user-resetPwd").validate({
 			rules:{
 				password:{
@@ -36,12 +166,68 @@
 					maxlength: 20,
 					specialSign: true
 				},
+                confirmPassword: {
+                    required: true,
+                    equalTo: "#password"
+                }
 			},
+            messages: {
+                password: {
+                    required: "请输入新密码",
+                    minlength: "密码不能小于5个字符",
+                    maxlength: "密码不能大于20个字符"
+                },
+                confirmPassword: {
+                    required: "请再次输入新密码",
+                    equalTo: "两次密码输入不一致"
+                }
+            },
 			focusCleanup: true
 		});
+
+        function togglePasswordInput(inputId, btn) {
+            var $input = $("#" + inputId);
+            var isPassword = $input.attr("type") === "password";
+            $input.attr("type", isPassword ? "text" : "password");
+            $(btn).find("i").attr("class", isPassword ? "fa fa-eye-slash" : "fa fa-eye");
+        }
+
+        function fillInitPassword() {
+            var initPassword = $("#initPasswordValue").val() || "";
+            $("#password").val(initPassword);
+            $("#confirmPassword").val(initPassword);
+        }
+
+        function copyPasswordValue(inputId) {
+            var value = $("#" + inputId).val() || "";
+            if (!value) {
+                $.modal.msgWarning("当前没有可复制的密码");
+                return;
+            }
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(value).then(function() {
+                    $.modal.msgSuccess("密码已复制");
+                }, function() {
+                    fallbackCopy(value);
+                });
+            } else {
+                fallbackCopy(value);
+            }
+        }
+
+        function fallbackCopy(value) {
+            var $temp = $("<input>");
+            $("body").append($temp);
+            $temp.val(value).select();
+            document.execCommand("copy");
+            $temp.remove();
+            $.modal.msgSuccess("密码已复制");
+        }
 		
 		function submitHandler() {
-	        if ($.validate.form()) {
+            var chrtype = [[${#strings.defaultString(@config.getKey('sys.account.chrtype'), 0)}]];
+            var password = $("#password").val();
+	        if ($.validate.form() && checkpwd(chrtype, password)) {
 	        	$.operate.save(ctx + "system/user/resetPwd", $('#form-user-resetPwd').serialize());
 	        }
 	    }

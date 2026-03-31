@@ -50,6 +50,27 @@
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            overflow: hidden;
+        }
+        .article-description::after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+        .article-description p,
+        .article-description div,
+        .article-description section,
+        .article-description article {
+            float: none !important;
+            width: auto !important;
+            max-width: 100% !important;
+        }
+        .article-description img,
+        .article-description table,
+        .article-description iframe,
+        .article-description video {
+            max-width: 100% !important;
+            height: auto;
         }
         .article-actions {
             margin: 30px 0;
@@ -296,6 +317,12 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,.1);
         }
+        @media (max-width: 992px) {
+            .article-content {
+                width: 100%;
+                padding: 32px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -388,6 +415,7 @@
                         <i class="fa fa-robot"></i> AI解析
                     </button>
                 </div>
+                <div th:replace="~{web/fragments/comments :: comments(commentPrefix='article', commentType='2', targetId=${article.articleId})}"></div>
             </div>
         </div>
     </div>

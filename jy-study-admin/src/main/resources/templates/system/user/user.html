@@ -77,6 +77,9 @@
 		            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="system:user:export">
 			            <i class="fa fa-download"></i> 导出
 			        </a>
+                    <a class="btn btn-default multiple disabled" onclick="batchResetPwd()" shiro:hasPermission="system:user:resetPwd">
+                        <i class="fa fa-key"></i> 统一改密
+                    </a>
 		        </div>
 		        
 		        <div class="col-sm-12 select-table table-striped">
@@ -180,7 +183,7 @@
 			                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.userId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 			                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.userId + '\')"><i class="fa fa-remove"></i>删除</a> ');
 			                var more = [];
-			                more.push("<a class='btn btn-default btn-xs " + resetPwdFlag + "' href='javascript:void(0)' onclick='resetPwd(" + row.userId + ")'><i class='fa fa-key'></i>重置密码</a> ");
+			                more.push("<a class='btn btn-default btn-xs " + resetPwdFlag + "' href='javascript:void(0)' onclick='resetPwd(" + row.userId + ")'><i class='fa fa-key'></i>密码管理</a> ");
 			                more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authRole(" + row.userId + ")'><i class='fa fa-check-square-o'></i>分配角色</a>");
 			                actions.push('<a tabindex="0" class="btn btn-info btn-xs" role="button" data-container="body" data-placement="left" data-toggle="popover" data-html="true" data-trigger="hover" data-content="' + more.join('') + '"><i class="fa fa-chevron-circle-right"></i>更多操作</a>');
 			                return actions.join('');
@@ -245,8 +248,29 @@
 		/* 用户管理-重置密码 */
 		function resetPwd(userId) {
 		    var url = prefix + '/resetPwd/' + userId;
-		    $.modal.open("重置密码", url, '800', '300');
+		    $.modal.open("密码管理", url, '860', '520');
 		}
+
+        function batchResetPwd() {
+            var rows = $("#bootstrap-table").bootstrapTable('getSelections') || [];
+            if (rows.length === 0) {
+                $.modal.alertWarning("请至少选择一条记录");
+                return;
+            }
+            var validRows = $.grep(rows, function(row) {
+                return Number(row.userId) !== 1;
+            });
+            if (validRows.length === 0) {
+                $.modal.alertWarning("当前只选中了超级管理员，无法执行批量改密");
+                return;
+            }
+            if (validRows.length !== rows.length) {
+                $.modal.msgWarning("已自动跳过超级管理员，仅对其余用户统一改密");
+            }
+            var userIds = $.map(validRows, function(row) { return row.userId; });
+            var url = prefix + '/batchResetPwd?ids=' + userIds.join(',');
+            $.modal.open("批量统一改密", url, '860', '560');
+        }
 		
 		/* 用户管理-分配角色 */
 		function authRole(userId) {

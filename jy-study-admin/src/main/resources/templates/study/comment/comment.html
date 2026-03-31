@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('评论管理')" />
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="formId">
+                <div class="select-list">
+                    <ul>
+                        <li>
+                            <label>评论类型：</label>
+                            <select name="type" class="form-control">
+                                <option value="">全部</option>
+                                <option value="1">课程</option>
+                                <option value="2">文章</option>
+                            </select>
+                        </li>
+                        <li>
+                            <label>状态：</label>
+                            <select name="status" class="form-control">
+                                <option value="">全部</option>
+                                <option value="0">显示</option>
+                                <option value="1">隐藏</option>
+                            </select>
+                        </li>
+                        <li>
+                            <label>评论用户：</label>
+                            <input type="text" name="userName"/>
+                        </li>
+                        <li>
+                            <label>关联内容：</label>
+                            <input type="text" name="targetTitle"/>
+                        </li>
+                        <li>
+                            <label>评论内容：</label>
+                            <input type="text" name="content"/>
+                        </li>
+                        <li class="select-time">
+                            <label>评论时间：</label>
+                            <input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+                            <span>-</span>
+                            <input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+                        </li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="btn-group-sm" id="toolbar" role="group">
+            <a class="btn btn-success multiple disabled" onclick="changeStatusByIds('0')" shiro:hasPermission="study:comment:edit">
+                <i class="fa fa-eye"></i> 审核显示
+            </a>
+            <a class="btn btn-warning multiple disabled" onclick="changeStatusByIds('1')" shiro:hasPermission="study:comment:edit">
+                <i class="fa fa-eye-slash"></i> 隐藏评论
+            </a>
+            <a class="btn btn-danger multiple disabled" onclick="removeSelected()" shiro:hasPermission="study:comment:remove">
+                <i class="fa fa-remove"></i> 删除
+            </a>
+        </div>
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer" />
+<script th:inline="javascript">
+    var editFlag = [[${@permission.hasPermi('study:comment:edit')}]];
+    var removeFlag = [[${@permission.hasPermi('study:comment:remove')}]];
+    var prefix = ctx + "study/comment";
+
+    $(function() {
+        var options = {
+            url: prefix + "/list",
+            modalName: "评论",
+            columns: [{
+                checkbox: true
+            },
+            {
+                field: 'commentId',
+                title: '评论ID',
+                sortable: true
+            },
+            {
+                field: 'typeName',
+                title: '类型',
+                align: 'center'
+            },
+            {
+                field: 'targetTitle',
+                title: '关联内容',
+                formatter: function(value) {
+                    return $.table.tooltip(value, 24, "open");
+                }
+            },
+            {
+                field: 'userName',
+                title: '评论用户'
+            },
+            {
+                field: 'content',
+                title: '评论内容',
+                formatter: function(value) {
+                    return $.table.tooltip(value, 28, "open");
+                }
+            },
+            {
+                field: 'status',
+                title: '状态',
+                align: 'center',
+                formatter: function(value) {
+                    if (value === '1') {
+                        return '<span class="badge badge-warning">隐藏</span>';
+                    }
+                    return '<span class="badge badge-primary">显示</span>';
+                }
+            },
+            {
+                field: 'createTime',
+                title: '评论时间',
+                sortable: true,
+                sortName: 'create_time'
+            },
+            {
+                title: '操作',
+                align: 'center',
+                formatter: function(value, row) {
+                    var actions = [];
+                    if (row.status === '1') {
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="changeStatus(\'' + row.commentId + '\', \'0\')"><i class="fa fa-eye"></i>显示</a> ');
+                    } else {
+                        actions.push('<a class="btn btn-warning btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="changeStatus(\'' + row.commentId + '\', \'1\')"><i class="fa fa-eye-slash"></i>隐藏</a> ');
+                    }
+                    actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="removeComment(\'' + row.commentId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                    return actions.join('');
+                }
+            }]
+        };
+        $.table.init(options);
+    });
+
+    function changeStatus(commentId, status) {
+        var actionName = status === '0' ? '审核显示' : '隐藏评论';
+        $.modal.confirm('确认要' + actionName + '吗？', function() {
+            $.ajax({
+                url: prefix + "/changeStatus",
+                type: "POST",
+                data: {
+                    ids: commentId,
+                    status: status
+                },
+                success: function(result) {
+                    if (result.code === 0) {
+                        $.modal.msgSuccess(result.msg || "操作成功");
+                        $.table.refresh();
+                    } else {
+                        $.modal.alertError(result.msg || "操作失败");
+                    }
+                }
+            });
+        });
+    }
+
+    function changeStatusByIds(status) {
+        var ids = $.table.selectColumns("commentId");
+        if (!ids || ids.length === 0) {
+            $.modal.alertWarning("请至少选择一条评论");
+            return;
+        }
+        var actionName = status === '0' ? '审核显示' : '隐藏评论';
+        $.modal.confirm('确认要批量' + actionName + '吗？', function() {
+            $.ajax({
+                url: prefix + "/changeStatus",
+                type: "POST",
+                data: {
+                    ids: ids.join(","),
+                    status: status
+                },
+                success: function(result) {
+                    if (result.code === 0) {
+                        $.modal.msgSuccess(result.msg || "操作成功");
+                        $.table.refresh();
+                    } else {
+                        $.modal.alertError(result.msg || "操作失败");
+                    }
+                }
+            });
+        });
+    }
+
+    function removeComment(commentId) {
+        $.modal.confirm('确认要删除这条评论吗？', function() {
+            $.ajax({
+                url: prefix + "/remove",
+                type: "POST",
+                data: { ids: commentId },
+                success: function(result) {
+                    if (result.code === 0) {
+                        $.modal.msgSuccess(result.msg || "删除成功");
+                        $.table.refresh();
+                    } else {
+                        $.modal.alertError(result.msg || "删除失败");
+                    }
+                }
+            });
+        });
+    }
+
+    function removeSelected() {
+        var ids = $.table.selectColumns("commentId");
+        if (!ids || ids.length === 0) {
+            $.modal.alertWarning("请至少选择一条评论");
+            return;
+        }
+        $.modal.confirm('确认要删除选中的评论吗？', function() {
+            $.ajax({
+                url: prefix + "/remove",
+                type: "POST",
+                data: { ids: ids.join(",") },
+                success: function(result) {
+                    if (result.code === 0) {
+                        $.modal.msgSuccess(result.msg || "删除成功");
+                        $.table.refresh();
+                    } else {
+                        $.modal.alertError(result.msg || "删除失败");
+                    }
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>
