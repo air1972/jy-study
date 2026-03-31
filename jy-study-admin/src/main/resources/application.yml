@@ -147,18 +147,18 @@ swagger:
 aliyun:
   oss:
     endpoint: oss-cn-wuhan-lr.aliyuncs.com
-    accessKeyId: LTAI5tCsrfr965iAdihEU8u5
-    accessKeySecret: iIdqICPU1pmoAOAojtHmawGUcKGjfp
+    accessKeyId:
+    accessKeySecret: 
     bucketName: java-ai-air
 
 
 # 通义的api
 modelTongyi:
-  apiKey: sk-698771aad1214d3582a313e8e1a7c670
+  apiKey: 
 
 # 硅基流动的key
 siliconCouldAI:
-  apiKey: sk-zchqoqxdrugkqwofnpxyphakawiqxfkrsqcvhoobbovkiazc
+  apiKey: 
 
 
   
