@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ruoyi</artifactId>
+        <groupId>com.jy.study</groupId>
+        <version>4.7.9</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
+    <artifactId>ruoyi-admin</artifactId>
+
+    <description>
+        web服务入口
+    </description>
+
+    <dependencies>
+
+        <!-- SpringBoot集成thymeleaf模板 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- spring-boot-devtools -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional> <!-- 表示依赖不会传递 -->
+        </dependency>
+
+        <!-- swagger3-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+        </dependency>
+
+        <!-- 防止进入swagger页面报类型转换错误，排除3.0.0中的引用，手动增加1.6.2版本 -->
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+
+        <!-- Mysql驱动包 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <!-- 核心模块-->
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-framework</artifactId>
+        </dependency>
+
+        <!-- 定时任务-->
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-quartz</artifactId>
+        </dependency>
+
+        <!-- 代码生成-->
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-generator</artifactId>
+        </dependency>
+
+        <!-- 课程模块-->
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-lesson</artifactId>
+        </dependency>
+
+        <!-- 公共模块 -->
+        <dependency>
+            <groupId>com.jy.study</groupId>
+            <artifactId>jy-study-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+<!--        阿里云oss储存-->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.17.4</version>
+        </dependency>
+
+        <!-- SSE请求所需-->
+        <dependency>
+            <groupId>com.jfinal</groupId>
+            <artifactId>jfinal</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.5.15</version>
+                <configuration>
+                    <fork>true</fork> <!-- 如果没有该配置，devtools不会生效 -->
+                    <mainClass>com.jy.study.RuoYiApplication</mainClass>
+                    <finalName>${project.artifactId}</finalName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- YUI Compressor (CSS/JS压缩) 
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>yuicompressor-maven-plugin</artifactId>
+                <version>1.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>compress</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <jswarn>false</jswarn>
+                    <nosuffix>true</nosuffix>
+                    <linebreakpos>50000</linebreakpos>
+                    <sourceDirectory>src/main/resources/static</sourceDirectory>
+                    <force>true</force>
+                    <includes>
+                        <include>**/*.js</include>
+                        <include>**/*.css</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*.min.js</exclude>
+                        <exclude>**/*.min.css</exclude>
+                        <exclude>**/fileinput.js</exclude>
+                        <exclude>**/validate/**</exclude>
+                        <exclude>**/bootstrap-table/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin> -->
+        </plugins>
+        <finalName>${project.artifactId}</finalName>
+    </build>
+
+</project>

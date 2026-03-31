@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('错题管理')" />
+</head>
+<body class="gray-bg">
+    <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>题目ID：</label>
+                                <input type="text" name="exerciseId"/>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "study/wrong";
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                modalName: "错题",
+                showExport: false,
+                columns: [
+                    { field: 'id', title: '记录ID' },
+                    { field: 'exerciseId', title: '题目ID' },
+                    { field: 'content', title: '题目内容' },
+                    { field: 'wrongCount', title: '错误次数' },
+                    { field: 'lastWrongTime', title: '最后答错时间' },
+                    { title: '操作', align: 'center',
+                      formatter: function(value, row, index) {
+                          var actions = [];
+                          actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="showDetail('+ row.exerciseId +')"><i class="fa fa-eye"></i> 题目详情</a>');
+                          return actions.join('');
+                      }
+                    }
+                ]
+            };
+            $.table.init(options);
+        });
+        function showDetail(id) {
+            $.get(ctx + "web/exercise/" + id, function(res) {
+                if (res.code == 0) {
+                    var ex = res.data;
+                    var html = '<div class="p-3" style="white-space: pre-wrap;">' + (ex.content || '') + '</div>'
+                             + '<div class="p-3 text-success"><strong>正确答案：</strong>' + (ex.answer || '') + '</div>'
+                             + '<div class="p-3"><strong>解析：</strong>' + (ex.explanation || '暂无解析') + '</div>';
+                    $.modal.alertSuccess("题目详情：\n\n" + ex.content + "\n\n正确答案：" + (ex.answer || '') + "\n解析：" + (ex.explanation || '暂无解析'));
+                } else {
+                    $.modal.alertError(res.msg);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

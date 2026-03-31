@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyUserViewMapper">
+
+    <resultMap type="StudyUserView" id="UserViewResult">
+        <id     property="viewId"      column="view_id"      />
+        <result property="userId"      column="user_id"      />
+        <result property="type"        column="type"         />
+        <result property="targetId"    column="target_id"    />
+        <result property="ipAddr"      column="ip_addr"      />
+        <result property="createTime"  column="create_time"  />
+    </resultMap>
+
+    <insert id="insertUserView" parameterType="StudyUserView">
+        insert into study_user_view (
+            user_id,
+            type,
+            target_id,
+            ip_addr,
+            create_time
+        ) values (
+            #{userId},
+            #{type},
+            #{targetId},
+            #{ipAddr},
+            #{createTime}
+        )
+    </insert>
+
+    <select id="selectUserView" resultMap="UserViewResult">
+        select * from study_user_view
+        where user_id = #{param1} and type = #{param2} and target_id = #{param3}
+        limit 1
+    </select>
+
+    <delete id="deleteUserView" parameterType="Long">
+        delete from study_user_view where view_id = #{viewId}
+    </delete>
+
+    <select id="selectUserViewHistory" resultType="com.jy.study.lesson.domain.dto.UserViewHistoryDTO">
+        SELECT 
+            v.view_id, 
+            v.user_id, 
+            v.type, 
+            v.target_id, 
+            v.ip_addr, 
+            v.create_time,
+            CASE 
+                WHEN v.type = '1' THEN l.title
+                WHEN v.type = '2' THEN a.title
+                ELSE '未知'
+            END as title
+        FROM 
+            study_user_view v
+        LEFT JOIN
+            study_lesson l ON v.type = '1' AND v.target_id = l.lesson_id
+        LEFT JOIN
+            study_article a ON v.type = '2' AND v.target_id = a.article_id
+        WHERE 
+            v.user_id = #{userId}
+        ORDER BY 
+            v.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+
+    <!-- 查询用户浏览历史记录（连表查询） -->
+    <select id="selectUserViewHistoryWithDetails" resultType="com.jy.study.lesson.domain.dto.UserViewHistoryDTO">
+        SELECT
+            v.view_id as id,
+            v.user_id as userId,
+            v.target_id as targetId,
+            v.type,
+            CASE
+                WHEN v.type = '1' THEN l.title
+                WHEN v.type = '2' THEN a.title
+                ELSE ''
+                END as title,
+            v.ip_addr as ipAddr,
+            v.create_time as createTime,
+            CASE
+                WHEN v.type = '2' THEN SUBSTRING(a.content, 1, 150)
+                ELSE ''
+                END as contentSummary,
+            CASE
+                WHEN v.type = '1' THEN SUBSTRING(l.description, 1, 150)
+                ELSE ''
+                END as descriptionSummary
+        FROM
+            study_user_view v
+                LEFT JOIN
+            study_lesson l ON v.type = '1' AND v.target_id = l.lesson_id
+                LEFT JOIN
+            study_article a ON v.type = '2' AND v.target_id = a.article_id
+        WHERE
+            v.user_id = #{userId}
+        ORDER BY
+            v.create_time DESC
+            LIMIT
+            #{limit}
+    </select>
+
+
+    <!-- 获取最近7天活跃用户信息 -->
+    <select id="selectRecentActiveUsers" resultType="java.util.Map">
+        SELECT 
+            u.user_id as userId,
+            u.user_name as userName,
+            IFNULL(article_views.view_count, 0) as articleViewCount,
+            IFNULL(lesson_views.view_count, 0) as lessonViewCount,
+            IFNULL(article_likes.like_count, 0) as articleLikeCount,
+            IFNULL(lesson_likes.like_count, 0) as lessonLikeCount,
+            IFNULL(article_collects.collect_count, 0) as articleCollectCount,
+            IFNULL(lesson_collects.collect_count, 0) as lessonCollectCount,
+            (
+                IFNULL(article_views.view_count, 0) + 
+                IFNULL(lesson_views.view_count, 0) +
+                IFNULL(article_likes.like_count, 0) + 
+                IFNULL(lesson_likes.like_count, 0) +
+                IFNULL(article_collects.collect_count, 0) + 
+                IFNULL(lesson_collects.collect_count, 0)
+            ) as totalActions
+        FROM sys_user u
+        INNER JOIN (
+            SELECT DISTINCT user_id 
+            FROM study_user_view 
+            WHERE create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        ) active_users ON u.user_id = active_users.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as view_count
+            FROM study_user_view
+            WHERE type = '2' 
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) article_views ON u.user_id = article_views.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as view_count
+            FROM study_user_view
+            WHERE type = '1'
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) lesson_views ON u.user_id = lesson_views.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as like_count
+            FROM study_user_like
+            WHERE type = '2'
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) article_likes ON u.user_id = article_likes.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as like_count
+            FROM study_user_like
+            WHERE type = '1'
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) lesson_likes ON u.user_id = lesson_likes.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as collect_count
+            FROM study_user_collect
+            WHERE type = '2'
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) article_collects ON u.user_id = article_collects.user_id
+        LEFT JOIN (
+            SELECT user_id, COUNT(DISTINCT target_id) as collect_count
+            FROM study_user_collect
+            WHERE type = '1'
+            AND create_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY user_id
+        ) lesson_collects ON u.user_id = lesson_collects.user_id
+        ORDER BY totalActions DESC
+    </select>
+</mapper> 

@@ -1,0 +1,13 @@
+com\jy\study\generator\mapper\GenTableMapper.class
+com\jy\study\generator\service\impl\GenTableColumnServiceImpl.class
+com\jy\study\generator\util\VelocityUtils.class
+com\jy\study\generator\service\impl\GenTableServiceImpl.class
+com\jy\study\generator\mapper\GenTableColumnMapper.class
+com\jy\study\generator\domain\GenTableColumn.class
+com\jy\study\generator\controller\GenController.class
+com\jy\study\generator\service\IGenTableService.class
+com\jy\study\generator\service\IGenTableColumnService.class
+com\jy\study\generator\util\GenUtils.class
+com\jy\study\generator\config\GenConfig.class
+com\jy\study\generator\domain\GenTable.class
+com\jy\study\generator\util\VelocityInitializer.class

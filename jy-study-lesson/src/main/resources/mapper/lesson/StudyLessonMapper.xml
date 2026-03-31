@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyLessonMapper">
+    <resultMap type="StudyLesson" id="LessonResult">
+        <id     property="lessonId"     column="lesson_id"     />
+        <result property="title"        column="title"         />
+        <result property="coverImg"     column="cover_img"     />
+        <result property="description"  column="description"   />
+        <result property="versionId"    column="version_id"    />
+        <result property="versionName"  column="version_name"  />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="subjectName"  column="subject_name"  />
+        <result property="gradeId"      column="grade_id"      />
+        <result property="gradeName"    column="grade_name"    />
+        <result property="volumeId"     column="volume_id"     />
+        <result property="volumeName"   column="volume_name"   />
+        <result property="tags"         column="tags"          />
+        <result property="status"       column="status"        />
+        <result property="sort"         column="sort"          />
+        <result property="viewCount"    column="view_count"    />
+        <result property="likeCount"    column="like_count"    />
+        <result property="collectCount" column="collect_count" />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+        <result property="videoUrl"     column="video_url"     />
+        <result property="videoSubtitleText" column="video_subtitle_text" />
+    </resultMap>
+
+    <sql id="selectStudyLessonVo">
+        select lesson_id, title, cover_img, description,
+               version_id, version_name, subject_id, subject_name, grade_id, grade_name, volume_id, volume_name,
+               tags, status, sort, view_count, like_count, collect_count, create_by,
+               create_time, update_by, update_time, remark, video_url, video_subtitle_text
+        from study_lesson
+    </sql>
+
+    <!-- 计数相关SQL -->
+    <update id="incrementViewCount">
+        update study_lesson set view_count = view_count + 1 where lesson_id = #{lessonId}
+    </update>
+
+    <update id="incrementLikeCount">
+        update study_lesson set like_count = like_count + 1 where lesson_id = #{lessonId}
+    </update>
+
+    <update id="decrementLikeCount">
+        update study_lesson set like_count = like_count - 1 where lesson_id = #{lessonId}
+    </update>
+
+    <update id="incrementCollectCount">
+        update study_lesson set collect_count = collect_count + 1 where lesson_id = #{lessonId}
+    </update>
+
+    <update id="decrementCollectCount">
+        update study_lesson set collect_count = collect_count - 1 where lesson_id = #{lessonId}
+    </update>
+
+    <select id="selectStudyLessonList" parameterType="StudyLesson" resultMap="LessonResult">
+        <include refid="selectStudyLessonVo"/>
+        <where>
+            <if test="title != null and title != ''">
+                AND title like concat('%', #{title}, '%')
+            </if>
+            <if test="description != null and description != ''">
+                AND description like concat('%', #{description}, '%')
+            </if>
+            <if test="versionName != null and versionName != ''">
+                AND version_name = #{versionName}
+            </if>
+            <if test="subjectName != null and subjectName != ''">
+                AND subject_name = #{subjectName}
+            </if>
+            <if test="gradeName != null and gradeName != ''">
+                AND grade_name = #{gradeName}
+            </if>
+            <if test="volumeName != null and volumeName != ''">
+                AND volume_name = #{volumeName}
+            </if>
+            AND status = '0'
+        </where>
+        order by sort desc, create_time desc
+    </select>
+
+    <select id="selectStudyLessonByLessonId" parameterType="Long" resultMap="LessonResult">
+        <include refid="selectStudyLessonVo"/>
+        where lesson_id = #{lessonId}
+    </select>
+
+    <insert id="insertStudyLesson" parameterType="StudyLesson" useGeneratedKeys="true" keyProperty="lessonId">
+        insert into study_lesson
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">title,</if>
+            <if test="coverImg != null">cover_img,</if>
+            <if test="description != null">description,</if>
+            <if test="versionId != null">version_id,</if>
+            <if test="versionName != null and versionName != ''">version_name,</if>
+            <if test="subjectId != null">subject_id,</if>
+            <if test="subjectName != null and subjectName != ''">subject_name,</if>
+            <if test="gradeId != null">grade_id,</if>
+            <if test="gradeName != null and gradeName != ''">grade_name,</if>
+            <if test="volumeId != null">volume_id,</if>
+            <if test="volumeName != null and volumeName != ''">volume_name,</if>
+
+            <if test="tags != null">tags,</if>
+            <if test="status != null">status,</if>
+            <if test="sort != null">sort,</if>
+            <if test="viewCount != null">view_count,</if>
+            <if test="likeCount != null">like_count,</if>
+            <if test="collectCount != null">collect_count,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+            <if test="videoUrl != null">video_url,</if>
+            <if test="videoSubtitleText != null">video_subtitle_text,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="coverImg != null">#{coverImg},</if>
+            <if test="description != null">#{description},</if>
+            <if test="versionId != null">#{versionId},</if>
+            <if test="versionName != null and versionName != ''">#{versionName},</if>
+            <if test="subjectId != null">#{subjectId},</if>
+            <if test="subjectName != null and subjectName != ''">#{subjectName},</if>
+            <if test="gradeId != null">#{gradeId},</if>
+            <if test="gradeName != null and gradeName != ''">#{gradeName},</if>
+            <if test="volumeId != null">#{volumeId},</if>
+            <if test="volumeName != null and volumeName != ''">#{volumeName},</if>
+
+            <if test="tags != null">#{tags},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="viewCount != null">#{viewCount},</if>
+            <if test="likeCount != null">#{likeCount},</if>
+            <if test="collectCount != null">#{collectCount},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="videoUrl != null">#{videoUrl},</if>
+            <if test="videoSubtitleText != null">#{videoSubtitleText},</if>
+        </trim>
+    </insert>
+
+    <update id="updateStudyLesson" parameterType="StudyLesson">
+        update study_lesson
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="coverImg != null">cover_img = #{coverImg},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="versionId != null">version_id = #{versionId},</if>
+            <if test="versionName != null and versionName != ''">version_name = #{versionName},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="subjectName != null and subjectName != ''">subject_name = #{subjectName},</if>
+            <if test="gradeId != null">grade_id = #{gradeId},</if>
+            <if test="gradeName != null and gradeName != ''">grade_name = #{gradeName},</if>
+            <if test="volumeId != null">volume_id = #{volumeId},</if>
+            <if test="volumeName != null and volumeName != ''">volume_name = #{volumeName},</if>
+
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="viewCount != null">view_count = #{viewCount},</if>
+            <if test="likeCount != null">like_count = #{likeCount},</if>
+            <if test="collectCount != null">collect_count = #{collectCount},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="videoSubtitleText != null">video_subtitle_text = #{videoSubtitleText},</if>
+        </trim>
+        where lesson_id = #{lessonId}
+    </update>
+
+    <update id="updateViewCount" parameterType="StudyLesson">
+        update study_lesson 
+        set view_count = view_count + #{viewCount}
+        where lesson_id = #{lessonId}
+    </update>
+
+    <delete id="deleteStudyLessonByLessonId" parameterType="Long">
+        delete from study_lesson where lesson_id = #{lessonId}
+    </delete>
+
+    <delete id="deleteStudyLessonByLessonIds" parameterType="String">
+        delete from study_lesson where lesson_id in
+        <foreach item="lessonId" collection="array" open="(" separator="," close=")">
+            #{lessonId}
+        </foreach>
+    </delete>
+
+    <!-- 统计课程数量 -->
+    <select id="selectLessonCount" parameterType="String" resultType="Long">
+        SELECT COUNT(1) 
+        FROM study_lesson
+        WHERE status = '0'
+        <if test="type != null">
+            <choose>
+                <when test="type == 'month'">
+                    AND DATE_FORMAT(create_time,'%Y%m') = DATE_FORMAT(CURDATE(),'%Y%m')
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 获取课程增长趋势 -->
+    <select id="selectLessonTrend" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(create_time, '%Y-%m') as month,
+            COUNT(1) as count
+        FROM study_lesson
+        WHERE status = '0'
+            AND create_time >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH)
+            AND create_time &lt; DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY month ASC
+    </select>
+
+    <!-- 统计课程分类数据 -->
+    <select id="selectCategoryStats" resultType="java.util.Map">
+        SELECT 
+            '未分类' as name,
+            COUNT(1) as value
+        FROM study_lesson
+        WHERE status = '0'
+    </select>
+
+    <!-- 获取热门课程 -->
+    <select id="selectTopLessons" resultType="java.util.Map">
+        SELECT 
+            lesson_id as id,
+            title,
+            view_count as viewCount
+        FROM study_lesson
+        WHERE status = '0'
+        ORDER BY view_count DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

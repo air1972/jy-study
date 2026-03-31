@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('课程详细')" />
+</head>
+<body class="white-bg">
+    <div class="main-content">
+        <form class="form-horizontal" th:object="${studyLesson}">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">课程标题：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{title}"></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">课程标签：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{tags}"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">排序：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{sort}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{status == '0' ? '正常' : '停用'}"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">封面图片：</label>
+                        <div class="col-sm-8">
+                            <img th:if="*{coverImg != null and coverImg != ''}" th:src="*{coverImg}" style="max-width: 200px; max-height: 200px;">
+                            <p th:if="*{coverImg == null or coverImg == ''}" class="form-control-plaintext">暂无图片</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">课程描述：</label>
+                        <div class="col-xs-10">
+                            <p class="form-control-plaintext" th:text="*{description}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">课程视频：</label>
+                        <div class="col-xs-10">
+                            <video th:if="*{videoUrl != null and videoUrl != ''}" th:src="*{videoUrl}" style="max-width: 400px;" controls></video>
+                            <p th:if="*{videoUrl == null or videoUrl == ''}" class="form-control-plaintext">暂无视频</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="form-header h4">统计信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">浏览量：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{viewCount}"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">点赞数：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{likeCount}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">收藏数：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{collectCount}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">创建者：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{createBy}"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">创建时间：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{#dates.format(createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">更新者：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{updateBy}"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">更新时间：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:text="*{#dates.format(updateTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <p class="form-control-plaintext" th:text="*{remark}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+</body>
+</html> 

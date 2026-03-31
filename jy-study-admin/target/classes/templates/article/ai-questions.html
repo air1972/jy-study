@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('AI试题详情')" />
+    <style>
+        .question-content {
+            white-space: pre-wrap;
+            font-family: "Microsoft YaHei", sans-serif;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        /* 选项样式 */
+        .question-content {
+            counter-reset: question-counter;
+        }
+        
+        /* 题目序号样式 */
+        .question-content::before {
+            counter-increment: question-counter;
+        }
+        
+        /* 答案和解析样式 */
+        .question-content [class^="answer"],
+        .question-content [class^="explanation"] {
+            margin-top: 10px;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        /* 选项间距 */
+        .question-content option {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="font-bold">题目总数：</label>
+                    <p th:text="${aiCoze.questionNum}"></p>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="font-bold">生成时间：</label>
+                    <p th:text="${#dates.format(aiCoze.createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label class="font-bold">飞书文档：</label>
+                    <a th:href="${aiCoze.fileUrl}" target="_blank" class="btn btn-primary btn-xs">
+                        <i class="fa fa-external-link"></i> 查看文档
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label class="font-bold">题目内容：</label>
+                    <div class="question-content" th:utext="${formattedContent}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <th:block th:include="include :: footer" />
+</body>
+</html> 

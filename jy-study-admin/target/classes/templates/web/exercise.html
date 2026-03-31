@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('习题库')" />
+    <style>
+        :root {
+            --bg-main: #eef3f8;
+            --ink-900: #1f2d3d;
+            --ink-600: #556677;
+            --brand: #0ea5a4;
+            --brand-strong: #0b7f86;
+            --accent: #f59e0b;
+            --card: #ffffff;
+            --line: #dbe5ef;
+        }
+        body.gray-bg {
+            background:
+                radial-gradient(circle at 85% 10%, rgba(14, 165, 164, 0.16), transparent 38%),
+                radial-gradient(circle at 10% 0%, rgba(245, 158, 11, 0.12), transparent 30%),
+                var(--bg-main) !important;
+            font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+        }
+        .exercise-shell {
+            max-width: 1100px;
+            margin: 28px auto 40px;
+            padding: 0 10px;
+        }
+        .exercise-hero {
+            background: linear-gradient(120deg, #0f766e, #0ea5a4 60%, #14b8a6);
+            border-radius: 14px;
+            color: #ecfeff;
+            padding: 22px 26px;
+            margin-bottom: 16px;
+            box-shadow: 0 12px 24px rgba(13, 71, 83, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .hero-title {
+            margin: 0 0 6px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .hero-sub {
+            margin: 0;
+            color: rgba(236, 254, 255, 0.92);
+            font-size: 14px;
+        }
+        .hero-badge {
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.34);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .exercise-board {
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid #e8eef5;
+            box-shadow: 0 8px 24px rgba(17, 38, 64, 0.06);
+            overflow: hidden;
+        }
+        .nav-tabs-custom {
+            margin-bottom: 0;
+            background: transparent;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        .nav-tabs-custom > .nav-tabs {
+            border-bottom: 1px solid var(--line);
+            background: #f8fbff;
+            padding: 10px 16px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-tabs-custom > .nav-tabs > li {
+            border: none;
+            margin: 0;
+        }
+        .nav-tabs-custom > .nav-tabs > li > a {
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            color: #577286;
+            padding: 10px 14px;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.25s;
+        }
+        .nav-tabs-custom > .nav-tabs > li > a:hover {
+            color: #1d4f6d;
+            background: #eef6ff !important;
+        }
+        .nav-tabs-custom > .nav-tabs > li.active > a {
+            color: #0d9488;
+            font-weight: 600;
+            border-color: #b8e7e2 !important;
+            background: #ebfffc !important;
+        }
+
+        .knowledge-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ebf0f5;
+        }
+        .knowledge-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(14, 56, 85, 0.1);
+            border-color: #d2e9f8;
+        }
+        .knowledge-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--ink-900);
+            margin: 0;
+        }
+
+        .btn-group-custom {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-custom {
+            height: 34px;
+            padding: 0 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            outline: none !important;
+        }
+        .btn-custom:active {
+            transform: scale(0.95);
+        }
+        .btn-detail {
+            background-color: #edf7ff;
+            color: #236892;
+        }
+        .btn-detail:hover {
+            background-color: #d9efff;
+            color: #184e70;
+        }
+        .btn-practice {
+            background: linear-gradient(135deg, #0ea5a4, #0b7f86);
+            color: #fff;
+        }
+        .btn-practice:hover {
+            background: linear-gradient(135deg, #0c8f8e, #0a7077);
+            color: #fff;
+        }
+
+        .exercise-card {
+            background: #fff;
+            border: 1px solid #ebf1f7;
+            padding: 20px; 
+            margin-bottom: 16px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .exercise-card:hover {
+            border-color: #d5e8f7;
+        }
+        .pagination-container { margin-top: 20px; text-align: center; }
+        .badge-primary {
+            background: linear-gradient(135deg, #0ea5a4, #118ab2);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .badge-info {
+            background: #fff7e8;
+            color: #b45309;
+            border: 1px solid #fcd9a7;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .answer-section {
+            background-color: #f8fbff;
+            border: 1px solid #e7eef7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 12px;
+        }
+        .answer-label {
+            font-size: 13px;
+            color: #5f7385;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .answer-label::before {
+            content: "";
+            display: inline-block;
+            width: 3px;
+            height: 12px;
+            background: var(--brand);
+            border-radius: 2px;
+        }
+        .result-section {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .result-section.correct {
+            background-color: #f1fdf8;
+            border: 1px solid #a5e4c2;
+        }
+        .result-section.wrong {
+            background-color: #fff3f2;
+            border: 1px solid #ffc6c2;
+        }
+        .result-status {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-status.correct { color: #52c41a; }
+        .result-status.wrong { color: #f5222d; }
+        .result-answer {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .result-explanation {
+            font-size: 13px;
+            color: #666;
+            border-top: 1px dashed #ddd;
+            padding-top: 8px;
+        }
+        .tab-content {
+            padding: 18px !important;
+            background: #fff;
+        }
+        .knowledge-filter {
+            background: #f7fbff;
+            border: 1px solid #dce9f6;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .knowledge-filter .form-control {
+            min-width: 160px;
+            height: 34px;
+        }
+        @media (max-width: 768px) {
+            .exercise-shell { margin: 16px auto 26px; padding: 0 8px; }
+            .exercise-hero {
+                padding: 18px 16px;
+                border-radius: 12px;
+                display: block;
+            }
+            .hero-title { font-size: 22px; }
+            .hero-badge { display: inline-block; margin-top: 8px; }
+            .knowledge-card { padding: 14px; display: block; }
+            .btn-group-custom { margin-top: 10px; }
+            .btn-custom { flex: 1; }
+        }
+    </style>
+</head>
+<body class="gray-bg">
+    <div class="exercise-shell">
+        <div class="exercise-hero">
+            <div>
+                <h2 class="hero-title">习题库</h2>
+                <p class="hero-sub">按知识点练习，实时反馈答案与解析，逐步攻克薄弱项。</p>
+            </div>
+            <div class="hero-badge">当前题目每页 3 道</div>
+        </div>
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-default" onclick="goBack()">返回</button>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="exercise-board">
+                <div class="nav-tabs-custom">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#tab_knowledge" data-toggle="tab">知识点列表</a></li>
+                        <li><a href="#tab_exercise" data-toggle="tab">题目练习</a></li>
+                    </ul>
+                    <div class="tab-content" style="padding: 20px;">
+                        <!-- 知识点页签 -->
+                        <div class="tab-pane active" id="tab_knowledge">
+                            <div class="text-right mb-2">
+                                <a class="btn-custom btn-detail" style="height:32px;" th:href="@{/web/exercise/wrong-answer}">打开错题本</a>
+                            </div>
+                            <div class="knowledge-filter">
+                                <select id="kpSourceType" class="form-control">
+                                    <option value="">全部来源</option>
+                                    <option value="article">文章</option>
+                                    <option value="lesson">课程</option>
+                                </select>
+                                <select id="kpSourceId" class="form-control">
+                                    <option value="">全部内容</option>
+                                </select>
+                                <button class="btn btn-primary btn-sm" onclick="applyKnowledgeFilter()">筛选</button>
+                                <button class="btn btn-default btn-sm" onclick="resetKnowledgeFilter()">重置</button>
+                            </div>
+                            <div id="knowledge-list">
+                                <!-- 知识点内容 -->
+                            </div>
+                            <div id="knowledge-pagination" class="pagination-container"></div>
+                        </div>
+
+                        <!-- 题目页签 -->
+                        <div class="tab-pane" id="tab_exercise">
+                            <div id="exercise-filter" class="mb-3" style="display:none;">
+                                <span class="badge badge-info p-2" id="filter-tag"></span>
+                                <button class="btn btn-link btn-sm" onclick="clearFilter()">清除筛选</button>
+                            </div>
+                            <div id="exercise-list">
+                                <!-- 题目内容 -->
+                            </div>
+                            <div id="exercise-pagination" class="pagination-container"></div>
+                            <div class="text-center mt-3" id="submit-btn-container" style="display:none;">
+                                <button id="submit-btn" class="btn btn-primary btn-lg">提交答案</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框 -->
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalTitle">详情</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- 详情内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "web/exercise";
+        var currentKpPage = 1;
+        var currentExPage = 1;
+        var selectedKpId = null;
+        var kpSourceType = "";
+        var kpSourceId = "";
+
+        $(function() {
+            bindKnowledgeFilterEvents();
+            loadKnowledgeList(1);
+
+            // 监听页签切换
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr("href");
+                if (target == "#tab_exercise") {
+                    loadExerciseList(1, selectedKpId);
+                }
+            });
+        });
+
+        function bindKnowledgeFilterEvents() {
+            $("#kpSourceType").on("change", function() {
+                kpSourceType = $(this).val() || "";
+                kpSourceId = "";
+                loadKnowledgeSourceOptions(kpSourceType);
+            });
+            $("#kpSourceId").on("change", function() {
+                kpSourceId = $(this).val() || "";
+            });
+        }
+
+        function loadKnowledgeSourceOptions(sourceType) {
+            if (!sourceType) {
+                $("#kpSourceId").html('<option value="">全部内容</option>');
+                return;
+            }
+            var url = sourceType === "article" ? prefix + "/knowledge/articles" : prefix + "/knowledge/lessons";
+            $.get(url, function(res) {
+                var html = '<option value="">全部内容</option>';
+                if (res.code == 0 && res.data) {
+                    res.data.forEach(function(item) {
+                        var id = sourceType === "article" ? item.articleId : item.lessonId;
+                        html += '<option value="' + id + '">' + item.title + '</option>';
+                    });
+                }
+                $("#kpSourceId").html(html);
+            });
+        }
+
+        function applyKnowledgeFilter() {
+            kpSourceType = $("#kpSourceType").val() || "";
+            kpSourceId = $("#kpSourceId").val() || "";
+            loadKnowledgeList(1);
+        }
+
+        function resetKnowledgeFilter() {
+            kpSourceType = "";
+            kpSourceId = "";
+            $("#kpSourceType").val("");
+            $("#kpSourceId").html('<option value="">全部内容</option>');
+            loadKnowledgeList(1);
+        }
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = ctx;
+            }
+        }
+
+        // 加载知识点列表
+        function loadKnowledgeList(page) {
+            currentKpPage = page;
+            var params = { pageNum: page, pageSize: 6 };
+            if (kpSourceType) {
+                params.contentType = kpSourceType;
+            }
+            if (kpSourceId) {
+                params.contentId = kpSourceId;
+            }
+            $.get(prefix + "/knowledge/list", params, function(res) {
+                if (res.code == 0) {
+                    var data = res.rows;
+                    var total = res.total;
+                    var html = "";
+                    var seenNames = new Set();
+                    
+                    data.forEach(function(kp) {
+                        // 简单的去重逻辑：如果当前页已经出现过同名知识点则跳过
+                        if (seenNames.has(kp.name)) return;
+                        seenNames.add(kp.name);
+                        
+                        html += '<div class="knowledge-card">';
+                        html += '  <div class="knowledge-title">' + kp.name + '</div>';
+                        html += '  <div class="btn-group-custom">';
+                        html += '    <button class="btn-custom btn-detail" onclick="showKnowledgeDetail(' + kp.id + ')">查看详情</button>';
+                        html += '    <button class="btn-custom btn-practice" onclick="goToExercise(' + kp.id + ', \'' + kp.name + '\')">去练习</button>';
+                        html += '  </div>';
+                        html += '</div>';
+                    });
+                    $("#knowledge-list").html(html || '<div class="text-center p-5">暂无知识点</div>');
+                    renderPagination("#knowledge-pagination", total, page, 6, "loadKnowledgeList");
+                }
+            });
+        }
+
+        // 查看知识点详情
+        function showKnowledgeDetail(id) {
+            $.get(prefix + "/knowledge/" + id, function(res) {
+                if (res.code == 0) {
+                    $("#modalTitle").text("知识点详情 - " + res.data.name);
+                    $("#modalBody").html('<div style="white-space: pre-wrap;">' + res.data.description + '</div>');
+                    $("#detailModal").modal('show');
+                }
+            });
+        }
+
+        // 跳转到题目页签并筛选
+        function goToExercise(kpId, kpName) {
+            selectedKpId = kpId;
+            $("#filter-tag").text("筛选知识点：" + kpName);
+            $("#exercise-filter").show();
+            $('.nav-tabs a[href="#tab_exercise"]').tab('show');
+            loadExerciseList(1, kpId);
+        }
+
+        // 清除筛选
+        function clearFilter() {
+            selectedKpId = null;
+            $("#exercise-filter").hide();
+            loadExerciseList(1);
+        }
+
+        // 加载题目列表
+        function loadExerciseList(page, kpId) {
+            currentExPage = page;
+            var params = { pageNum: page, pageSize: 3 };
+            if (kpId) params.knowledgePointId = kpId;
+
+            $.get(prefix + "/list", params, function(res) {
+                if (res.code == 0) {
+                    var data = res.rows;
+                    var total = res.total;
+                    var html = "";
+                    var practiceMode = !!kpId; // 仅从知识点进入时允许答题与提交
+                    data.forEach(function(ex) {
+                        html += '<div class="exercise-card exercise-item" data-id="' + ex.id + '" data-answer="' + ex.answer + '">';
+                        html += '  <div class="d-flex justify-content-between align-items-center mb-3">';
+                        html += '    <span class="badge badge-primary">' + getTypeName(ex.type) + '</span>';
+                        html += '    <button class="btn-custom btn-detail" style="height:28px; font-size:12px;" onclick="showExerciseDetail(' + ex.id + ')">题目详情</button>';
+                        html += '  </div>';
+                        html += '  <div class="mt-2 mb-3" style="font-size:15px; color:#333; line-height:1.6;">' + ex.content + '</div>';
+                        
+                        if (practiceMode) {
+                            html += '  <div class="answer-section">';
+                            html += '    <div class="answer-label">您的回答：</div>';
+                            
+                            if (ex.type == '1') { // 选择题
+                                try {
+                                    var options = typeof ex.options === 'string' ? JSON.parse(ex.options) : ex.options;
+                                    if (options) {
+                                        for (var key in options) {
+                                            html += '<div class="radio"><label><input type="radio" name="ex_' + ex.id + '" value="' + key + '"> ' + key + '. ' + options[key] + '</label></div>';
+                                        }
+                                    } else {
+                                        html += '<input type="text" class="form-control" name="ex_' + ex.id + '" placeholder="请输入您的选项（A/B/C/D...）">';
+                                    }
+                                } catch (e) {
+                                    html += '<input type="text" class="form-control" name="ex_' + ex.id + '" placeholder="请输入您的选项（A/B/C/D...）">';
+                                }
+                            } else if (ex.type == '3') { // 判断题
+                                html += '<div class="radio" style="display:inline-block; margin-right:20px;"><label><input type="radio" name="ex_' + ex.id + '" value="正确"> 正确</label></div>';
+                                html += '<div class="radio" style="display:inline-block;"><label><input type="radio" name="ex_' + ex.id + '" value="错误"> 错误</label></div>';
+                            } else if (ex.type == '2') { // 填空题
+                                html += '<input type="text" class="form-control" name="ex_' + ex.id + '" placeholder="请输入您的答案">';
+                            } else { // 简答题
+                                html += '<textarea class="form-control" name="ex_' + ex.id + '" rows="2" placeholder="请输入您的回答"></textarea>';
+                            }
+                            html += '  </div>'; // close answer-section
+                        }
+                        
+                        html += '  <div class="result-section" id="result_' + ex.id + '">';
+                        html += '    <div class="result-status"></div>';
+                        html += '    <div class="result-answer"></div>';
+                        html += '    <div class="result-explanation"></div>';
+                        html += '  </div>';
+                        
+                        html += '</div>'; // close exercise-card
+                    });
+                    $("#exercise-list").html(html || '<div class="text-center p-5">该知识点暂无题目</div>');
+                    $("#submit-btn-container").toggle(practiceMode && data.length > 0);
+                    
+                    // 重置提交按钮状态
+                    $("#submit-btn").attr("disabled", false).text("提交答案");
+                    
+                    renderPagination("#exercise-pagination", total, page, 3, "loadExerciseList", kpId);
+                }
+            });
+        }
+
+        function getTypeName(type) {
+            var names = { '1': '选择题', '2': '填空题', '3': '判断题', '4': '简答题' };
+            return names[type] || '未知题型';
+        }
+
+        // 查看题目详情（含解析）
+        function showExerciseDetail(id) {
+            $.get(prefix + "/" + id, function(res) {
+                if (res.code == 0) {
+                    var ex = res.data;
+                    $("#modalTitle").text("题目详情");
+                    var html = '<div class="mb-3"><strong>题目内容：</strong><br>' + ex.content + '</div>';
+                    html += '<div class="mb-3 text-success"><strong>正确答案：</strong>' + ex.answer + '</div>';
+                    html += '<div class="mb-3"><strong>解析说明：</strong><br>' + (ex.explanation || '暂无解析') + '</div>';
+                    $("#modalBody").html(html);
+                    $("#detailModal").modal('show');
+                }
+            });
+        }
+
+        // 渲染分页插件（事件委托方式，避免 onclick 失效）
+        function renderPagination(selector, total, current, size, funcName, extraParam) {
+            var pages = Math.ceil(total / size);
+            var html = '<ul class="pagination">';
+            html += '<li class="page-item ' + (current == 1 ? 'disabled' : '') + '"><a class="page-link" href="javascript:void(0)" data-func="' + funcName + '" data-page="' + (current - 1) + '" data-param="' + (extraParam || '') + '">上一页</a></li>';
+            
+            for (var i = 1; i <= pages; i++) {
+                if (i == current) {
+                    html += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
+                } else if (i <= 3 || i > pages - 3 || (i >= current - 1 && i <= current + 1)) {
+                    html += '<li class="page-item"><a class="page-link" href="javascript:void(0)" data-func="' + funcName + '" data-page="' + i + '" data-param="' + (extraParam || '') + '">' + i + '</a></li>';
+                } else if (i == 4 || i == pages - 3) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            html += '<li class="page-item ' + (current == pages ? 'disabled' : '') + '"><a class="page-link" href="javascript:void(0)" data-func="' + funcName + '" data-page="' + (current + 1) + '" data-param="' + (extraParam || '') + '">下一页</a></li>';
+            html += '</ul>';
+            $(selector).html(html);
+        }
+
+        // 分页点击事件（统一处理）
+        $(document).on('click', '.pagination a.page-link', function() {
+            var $a = $(this);
+            var $li = $a.closest('li');
+            if ($li.hasClass('disabled') || $li.hasClass('active')) return;
+            var fn = $a.data('func');
+            var page = parseInt($a.data('page'), 10);
+            var param = $a.data('param');
+            if (isNaN(page) || page < 1) return;
+            if (fn === 'loadKnowledgeList') {
+                loadKnowledgeList(page);
+            } else if (fn === 'loadExerciseList') {
+                // data-param 可能为空字符串
+                var kpId = (param && param !== '') ? Number(param) : undefined;
+                loadExerciseList(page, kpId);
+            }
+        });
+
+        // 提交答案逻辑
+        $("#submit-btn").click(function() {
+            var records = [];
+            var unanswered = false;
+            $(".exercise-item").each(function() {
+                var id = $(this).data("id");
+                var answer = "";
+                
+                // 查找当前题目下的回答
+                var $radioChecked = $(this).find("input[type='radio']:checked");
+                if ($radioChecked.length > 0) {
+                    answer = $radioChecked.val();
+                } else {
+                    // 如果不是单选，尝试获取输入框或文本域的值
+                    answer = $(this).find("input[type='text'], textarea").val() || "";
+                }
+
+                if (!answer.trim()) unanswered = true;
+                records.push({ exerciseId: id, userAnswer: answer.trim() });
+            });
+
+            if (unanswered) {
+                if (!confirm("还有题目未完成，确认提交吗？")) return;
+            }
+
+            $.modal.loading("正在提交...");
+            $.ajax({
+                type: "POST",
+                url: prefix + "/submit",
+                contentType: "application/json",
+                data: JSON.stringify(records),
+                success: function(res) {
+                    $.modal.closeLoading();
+                    if (res.code == 0) {
+                        var data = res.data;
+                        $.modal.msgSuccess("练习提交成功！您答对了 " + data.correctCount + "/" + data.totalCount + " 道题。");
+                        
+                        // 显示每道题的解析
+                        data.details.forEach(function(detail) {
+                            var $resBox = $("#result_" + detail.exerciseId);
+                            var $status = $resBox.find(".result-status");
+                            var $answer = $resBox.find(".result-answer");
+                            var $expl = $resBox.find(".result-explanation");
+                            
+                            $resBox.removeClass("correct wrong").addClass(detail.isCorrect ? "correct" : "wrong");
+                            $status.removeClass("correct wrong").addClass(detail.isCorrect ? "correct" : "wrong")
+                                   .html(detail.isCorrect ? '<i class="fa fa-check-circle"></i> 回答正确' : '<i class="fa fa-times-circle"></i> 回答错误');
+                            
+                            $answer.html('<strong>正确答案：</strong><span class="text-success">' + detail.correctAnswer + '</span>');
+                            $expl.html('<strong>解析：</strong>' + (detail.explanation || '暂无解析'));
+                            
+                            $resBox.fadeIn();
+                        });
+                        
+                        // 禁用提交按钮防止重复提交
+                        $("#submit-btn").attr("disabled", true).text("已提交");
+                        // 禁用所有输入控件
+                        $(".exercise-item input, .exercise-item textarea").attr("disabled", true);
+                    } else {
+                        $.modal.alertError(res.msg);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

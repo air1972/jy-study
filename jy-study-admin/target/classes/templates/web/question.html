@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试题详情 - 课程学习平台</title>
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link th:href="@{/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/web-common.css}" rel="stylesheet"/>
+    <style>
+        .questions-container {
+            padding: 40px 0;
+            background: #f8f9fa;
+            min-height: calc(100vh - 60px);
+        }
+        .questions-header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            margin-bottom: 30px;
+        }
+        .article-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #343a40;
+        }
+        .questions-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .questions-meta span {
+            margin-right: 20px;
+        }
+        .question-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .question-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .question-content {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .question-options {
+            margin-left: 20px;
+        }
+        .question-answer {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #28a745;
+        }
+        .question-explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #6c757d;
+        }
+        .question-user-answer {
+            margin-top: 10px;
+        }
+        .question-item.correct {
+            border-left-color: #28a745;
+        }
+        .question-item.wrong {
+            border-left-color: #dc3545;
+        }
+        .submit-bar {
+            text-align: center;
+            margin: 30px 0 10px;
+        }
+        .score-tip {
+            text-align: center;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .back-to-article {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="questions-container">
+        <div class="container">
+            <div class="back-to-article">
+                <a th:href="@{'/web/article/' + ${article.articleId}}" class="btn btn-outline-primary">
+                    <i class="fa fa-arrow-left"></i> 返回文章
+                </a>
+            </div>
+            <div class="questions-header">
+                <h1 class="article-title" th:text="${article.title}">文章标题</h1>
+                <div class="questions-meta">
+                    <span><i class="fa fa-list-ol"></i> 题目数量：<span th:text="${aiCoze.questionNum}">0</span></span>
+                    <span><i class="fa fa-clock-o"></i> 生成时间：<span th:text="${#dates.format(aiCoze.createTime, 'yyyy-MM-dd HH:mm:ss')}"></span></span>
+                </div>
+            </div>
+            <div class="questions-content" th:utext="${formattedContent}">
+            </div>
+            <div class="submit-bar">
+                <button id="submitQuestionsBtn" class="btn btn-primary btn-lg">提交答案</button>
+            </div>
+            <div class="score-tip" id="scoreTip" style="display:none;"></div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var ctx = /*[[@{/}]]*/'';
+        $(function() {
+            $("#submitQuestionsBtn").on("click", function() {
+                var records = [];
+                $(".question-item").each(function() {
+                    var $item = $(this);
+                    var exId = $item.data("exercise-id");
+                    var type = String($item.data("type") || "");
+                    if (!exId) {
+                        return;
+                    }
+                    var answer = "";
+                    if (type === "1" || type === "3") {
+                        answer = $item.find("input[type='radio']:checked").val() || "";
+                    } else if (type === "2") {
+                        answer = $item.find("input[type='text']").val() || "";
+                    } else {
+                        answer = $item.find("textarea").val() || "";
+                    }
+                    records.push({ exerciseId: Number(exId), userAnswer: (answer || "").trim() });
+                });
+
+                if (records.length === 0) {
+                    $.modal && $.modal.alertError ? $.modal.alertError("未找到可提交的题目") : alert("未找到可提交的题目");
+                    return;
+                }
+
+                $("#submitQuestionsBtn").attr("disabled", true).text("提交中...");
+                $.ajax({
+                    type: "POST",
+                    url: ctx + "web/exercise/submit",
+                    contentType: "application/json",
+                    data: JSON.stringify(records),
+                    success: function(res) {
+                        if (res.code == 0) {
+                            var data = res.data || {};
+                            var details = data.details || [];
+                            $("#scoreTip").show().text("本次提交：答对 " + (data.correctCount || 0) + "/" + (data.totalCount || 0) + " 题。");
+                            details.forEach(function(d) {
+                                var $item = $(".question-item[data-exercise-id='" + d.exerciseId + "']");
+                                $item.removeClass("correct wrong").addClass(d.isCorrect ? "correct" : "wrong");
+                                $item.find(".question-answer").html("<strong>答案：</strong>" + (d.correctAnswer || "")).show();
+                                $item.find(".question-explanation").html("<strong>解析：</strong>" + (d.explanation || "暂无解析")).show();
+                            });
+                            $(".question-item input, .question-item textarea").attr("disabled", true);
+                            $("#submitQuestionsBtn").text("已提交");
+                        } else {
+                            $("#submitQuestionsBtn").attr("disabled", false).text("提交答案");
+                            $.modal && $.modal.alertError ? $.modal.alertError(res.msg) : alert(res.msg);
+                        }
+                    },
+                    error: function() {
+                        $("#submitQuestionsBtn").attr("disabled", false).text("提交答案");
+                        $.modal && $.modal.alertError ? $.modal.alertError("提交失败") : alert("提交失败");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

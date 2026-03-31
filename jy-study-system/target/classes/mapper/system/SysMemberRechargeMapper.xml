@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.system.mapper.SysMemberRechargeMapper">
+
+    <resultMap id="SysMemberRechargeResult" type="SysMemberRecharge">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="months" column="months"/>
+        <result property="amount" column="amount"/>
+        <result property="rechargeNo" column="recharge_no"/>
+        <result property="payChannel" column="pay_channel"/>
+        <result property="expireBefore" column="expire_before"/>
+        <result property="expireAfter" column="expire_after"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insertSysMemberRecharge" parameterType="SysMemberRecharge" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_member_recharge(
+            user_id, months, amount, recharge_no, pay_channel, expire_before, expire_after, create_time
+        ) values (
+            #{userId}, #{months}, #{amount}, #{rechargeNo}, #{payChannel}, #{expireBefore}, #{expireAfter}, sysdate()
+        )
+    </insert>
+
+    <select id="selectByUserId" parameterType="Long" resultMap="SysMemberRechargeResult">
+        select id, user_id, months, amount, recharge_no, pay_channel, expire_before, expire_after, create_time
+        from sys_member_recharge
+        where user_id = #{userId}
+        order by id desc
+        limit 20
+    </select>
+</mapper>
+

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyExerciseMapper">
+    
+    <resultMap type="StudyExercise" id="StudyExerciseResult">
+        <result property="id"    column="id"    />
+        <result property="knowledgePointId"    column="knowledge_point_id"    />
+        <result property="type"    column="type"    />
+        <result property="content"    column="content"    />
+        <result property="options"    column="options"    />
+        <result property="answer"    column="answer"    />
+        <result property="explanation"    column="explanation"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="versionId"    column="version_id"    />
+        <result property="versionName"  column="version_name"  />
+        <result property="subjectId"    column="subject_id"    />
+        <result property="subjectName"  column="subject_name"  />
+        <result property="gradeId"      column="grade_id"      />
+        <result property="gradeName"    column="grade_name"    />
+        <result property="volumeId"     column="volume_id"     />
+        <result property="volumeName"   column="volume_name"   />
+    </resultMap>
+
+    <sql id="selectStudyExerciseVo">
+        select id, knowledge_point_id, type, content, options, answer, explanation, create_by, create_time, update_by, update_time, remark,
+               version_id, version_name, subject_id, subject_name, grade_id, grade_name, volume_id, volume_name from study_exercise
+    </sql>
+
+    <select id="selectStudyExerciseById" parameterType="Long" resultMap="StudyExerciseResult">
+        <include refid="selectStudyExerciseVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectStudyExerciseList" parameterType="StudyExercise" resultMap="StudyExerciseResult">
+        <include refid="selectStudyExerciseVo"/>
+        <where>
+            <if test="knowledgePointId != null "> and knowledge_point_id = #{knowledgePointId}</if>
+            <if test="type != null  and type != ''"> and type = #{type}</if>
+            <if test="remark != null and remark != ''"> and remark like concat('%', #{remark}, '%')</if>
+        </where>
+    </select>
+    
+    <insert id="insertStudyExercise" parameterType="StudyExercise" useGeneratedKeys="true" keyProperty="id">
+        insert into study_exercise
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="knowledgePointId != null">knowledge_point_id,</if>
+            <if test="type != null and type != ''">type,</if>
+            <if test="content != null and content != ''">content,</if>
+            <if test="options != null">options,</if>
+            <if test="answer != null">answer,</if>
+            <if test="explanation != null">explanation,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+            <if test="versionId != null">version_id,</if>
+            <if test="versionName != null">version_name,</if>
+            <if test="subjectId != null">subject_id,</if>
+            <if test="subjectName != null">subject_name,</if>
+            <if test="gradeId != null">grade_id,</if>
+            <if test="gradeName != null">grade_name,</if>
+            <if test="volumeId != null">volume_id,</if>
+            <if test="volumeName != null">volume_name,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="knowledgePointId != null">#{knowledgePointId},</if>
+            <if test="type != null and type != ''">#{type},</if>
+            <if test="content != null and content != ''">#{content},</if>
+            <if test="options != null">#{options},</if>
+            <if test="answer != null">#{answer},</if>
+            <if test="explanation != null">#{explanation},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="versionId != null">#{versionId},</if>
+            <if test="versionName != null">#{versionName},</if>
+            <if test="subjectId != null">#{subjectId},</if>
+            <if test="subjectName != null">#{subjectName},</if>
+            <if test="gradeId != null">#{gradeId},</if>
+            <if test="gradeName != null">#{gradeName},</if>
+            <if test="volumeId != null">#{volumeId},</if>
+            <if test="volumeName != null">#{volumeName},</if>
+         </trim>
+    </insert>
+
+    <update id="updateStudyExercise" parameterType="StudyExercise">
+        update study_exercise
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="knowledgePointId != null">knowledge_point_id = #{knowledgePointId},</if>
+            <if test="type != null and type != ''">type = #{type},</if>
+            <if test="content != null and content != ''">content = #{content},</if>
+            <if test="options != null">options = #{options},</if>
+            <if test="answer != null">answer = #{answer},</if>
+            <if test="explanation != null">explanation = #{explanation},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="versionId != null">version_id = #{versionId},</if>
+            <if test="versionName != null">version_name = #{versionName},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="subjectName != null">subject_name = #{subjectName},</if>
+            <if test="gradeId != null">grade_id = #{gradeId},</if>
+            <if test="gradeName != null">grade_name = #{gradeName},</if>
+            <if test="volumeId != null">volume_id = #{volumeId},</if>
+            <if test="volumeName != null">volume_name = #{volumeName},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteStudyExerciseById" parameterType="Long">
+        delete from study_exercise where id = #{id}
+    </delete>
+
+    <delete id="deleteStudyExerciseByIds" parameterType="String">
+        delete from study_exercise where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

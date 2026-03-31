@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyUserLikeMapper">
+
+    <resultMap type="StudyUserLike" id="UserLikeResult">
+        <id     property="likeId"      column="like_id"      />
+        <result property="userId"      column="user_id"      />
+        <result property="type"        column="type"         />
+        <result property="targetId"    column="target_id"    />
+        <result property="createTime"  column="create_time"  />
+    </resultMap>
+
+    <insert id="insertUserLike" parameterType="StudyUserLike">
+        insert into study_user_like (
+            user_id,
+            type,
+            target_id,
+            create_time
+        ) values (
+            #{userId},
+            #{type},
+            #{targetId},
+            #{createTime}
+        )
+    </insert>
+
+    <select id="selectUserLike" resultMap="UserLikeResult">
+        select * from study_user_like
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+        limit 1
+    </select>
+
+    <delete id="deleteUserLike">
+        delete from study_user_like 
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+    </delete>
+
+    <select id="checkLiked" resultType="boolean">
+        select count(1) from study_user_like
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+    </select>
+
+    <select id="selectUserLikeWithDetails" resultType="com.jy.study.lesson.domain.dto.UserLikeDTO">
+        SELECT
+            l.like_id as id,
+            l.user_id as userId,
+            l.target_id as targetId,
+            l.type,
+            CASE
+                WHEN l.type = '1' THEN les.title
+                WHEN l.type = '2' THEN a.title
+                ELSE ''
+                END as title,
+            l.create_time as createTime,
+            CASE
+                WHEN l.type = '2' THEN SUBSTRING(a.content, 1, 150)
+                ELSE ''
+                END as contentSummary,
+            CASE
+                WHEN l.type = '1' THEN SUBSTRING(les.description, 1, 150)
+                ELSE ''
+                END as descriptionSummary
+        FROM
+            study_user_like l
+                LEFT JOIN
+            study_lesson les ON l.type = '1' AND l.target_id = les.lesson_id
+                LEFT JOIN
+            study_article a ON l.type = '2' AND l.target_id = a.article_id
+        WHERE
+            l.user_id = #{userId}
+        ORDER BY
+            l.create_time DESC
+            LIMIT
+            #{limit}
+    </select>
+
+</mapper> 

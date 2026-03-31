@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('新增课程练习')" />
+    <th:block th:include="include :: select2-css" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content">
+                        <form id="form-exercise-add" class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label is-required">选择课程：</label>
+                                <div class="col-sm-10">
+                                    <select name="lessonId" class="form-control" required id="lessonSelect">
+                                        <option value="">请选择课程</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">版本：</label>
+                                <div class="col-sm-10">
+                                    <input name="versionId" type="hidden">
+                                    <input name="versionName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="versionSelect" class="form-control">
+                                            <option value="">请选择版本</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">科目：</label>
+                                <div class="col-sm-10">
+                                    <input name="subjectId" type="hidden">
+                                    <input name="subjectName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="subjectSelect" class="form-control">
+                                            <option value="">请选择科目</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">年级：</label>
+                                <div class="col-sm-10">
+                                    <input name="gradeId" type="hidden">
+                                    <input name="gradeName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="gradeSelect" class="form-control">
+                                            <option value="">请选择年级</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">册子：</label>
+                                <div class="col-sm-10">
+                                    <input name="volumeId" type="hidden">
+                                    <input name="volumeName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="volumeSelect" class="form-control">
+                                            <option value="">请选择册子</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label is-required">练习标题：</label>
+                                <div class="col-sm-10">
+                                    <textarea name="title" class="form-control" rows="3" required placeholder="请输入练习题目"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label is-required">题目类型：</label>
+                                <div class="col-sm-10">
+                                    <select name="exerciseType" class="form-control" required>
+                                        <option value="">请选择</option>
+                                        <option value="1">单选题</option>
+                                        <option value="2">多选题</option>
+                                        <option value="3">判断题</option>
+                                        <option value="4">简答题</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" id="optionsGroup">
+                                <label class="col-sm-2 control-label">选项：</label>
+                                <div class="col-sm-10">
+                                    <div class="row" style="margin-bottom: 10px;">
+                                        <div class="col-sm-2"><input type="text" class="form-control" placeholder="选项 A" name="optionA"></div>
+                                        <div class="col-sm-2"><input type="text" class="form-control" placeholder="选项 B" name="optionB"></div>
+                                        <div class="col-sm-2"><input type="text" class="form-control" placeholder="选项 C" name="optionC"></div>
+                                        <div class="col-sm-2"><input type="text" class="form-control" placeholder="选项 D" name="optionD"></div>
+                                    </div>
+                                    <small class="help-block">仅选择题需要填写，判断题和简答题留空</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label is-required">正确答案：</label>
+                                <div class="col-sm-10">
+                                    <input name="answer" class="form-control" type="text" required placeholder="单选题填字母如 A，多选题填 AB，判断题填正确/错误">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">答案解析：</label>
+                                <div class="col-sm-10">
+                                    <textarea name="analysis" class="form-control" rows="3" placeholder="请输入答案解析"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">分值：</label>
+                                <div class="col-sm-10">
+                                    <input name="score" class="form-control" type="number" value="10">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">难度：</label>
+                                <div class="col-sm-10">
+                                    <select name="difficulty" class="form-control">
+                                        <option value="1">简单</option>
+                                        <option value="2" selected>中等</option>
+                                        <option value="3">困难</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">排序：</label>
+                                <div class="col-sm-10">
+                                    <input name="sort" class="form-control" type="number" value="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">状态：</label>
+                                <div class="col-sm-10">
+                                    <label class="toggle-switch switch-solid">
+                                        <input type="checkbox" id="status" checked>
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">备注：</label>
+                                <div class="col-sm-10">
+                                    <textarea name="remark" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i> 保 存</button>&nbsp;
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭 </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: select2-js" />
+    <script>
+        var prefix = ctx + "lesson/exercise";
+        
+        // 加载课程列表
+        function loadLessonList() {
+            $.ajax({
+                url: ctx + 'lesson/listAll',
+                type: 'get',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.code === 0) {
+                        var html = '<option value="">请选择课程</option>';
+                        res.rows.forEach(function(lesson) {
+                            html += '<option value="' + lesson.lessonId + '">' + lesson.title + '</option>';
+                        });
+                        $('#lessonSelect').html(html);
+                        // 重新初始化 select2
+                        $('#lessonSelect').select2({
+                            placeholder: '请选择课程',
+                            allowClear: true
+                        });
+                    }
+                }
+            });
+        }
+        
+        $(function() {
+            loadLessonList();
+            loadClassifications();
+        });
+
+        // 加载分类数据
+        function loadClassifications() {
+            $.ajax({
+                url: ctx + "study/classification/all",
+                type: "get",
+                dataType: "json",
+                success: function(res) {
+                    if (res.code === 0) {
+                        var data = res.data || res;
+                        
+                        // 加载版本
+                        if (data.versions && data.versions.length > 0) {
+                            var versionHtml = '<option value="">请选择版本</option>';
+                            $.each(data.versions, function(i, item) {
+                                if (item.status == '0') {
+                                    versionHtml += '<option value="' + item.versionId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#versionSelect").html(versionHtml);
+                        }
+
+                        // 加载科目
+                        if (data.subjects && data.subjects.length > 0) {
+                            var subjectHtml = '<option value="">请选择科目</option>';
+                            $.each(data.subjects, function(i, item) {
+                                if (item.status == '0') {
+                                    subjectHtml += '<option value="' + item.subjectId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#subjectSelect").html(subjectHtml);
+                        }
+
+                        // 加载年级
+                        if (data.grades && data.grades.length > 0) {
+                            var gradeHtml = '<option value="">请选择年级</option>';
+                            $.each(data.grades, function(i, item) {
+                                if (item.status == '0') {
+                                    gradeHtml += '<option value="' + item.gradeId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#gradeSelect").html(gradeHtml);
+                        }
+
+                        // 加载册子
+                        if (data.volumes && data.volumes.length > 0) {
+                            var volumeHtml = '<option value="">请选择册子</option>';
+                            $.each(data.volumes, function(i, item) {
+                                if (item.status == '0') {
+                                    volumeHtml += '<option value="' + item.volumeId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#volumeSelect").html(volumeHtml);
+                        }
+                    }
+                }
+            });
+
+            // 版本选择事件
+            $("#versionSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='versionId']").val($selected.val());
+                $("input[name='versionName']").val($selected.data("name"));
+            });
+
+            // 科目选择事件
+            $("#subjectSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='subjectId']").val($selected.val());
+                $("input[name='subjectName']").val($selected.data("name"));
+            });
+
+            // 年级选择事件
+            $("#gradeSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='gradeId']").val($selected.val());
+                $("input[name='gradeName']").val($selected.data("name"));
+            });
+
+            // 册子选择事件
+            $("#volumeSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='volumeId']").val($selected.val());
+                $("input[name='volumeName']").val($selected.data("name"));
+            });
+        }
+
+        // 根据题目类型显示/隐藏选项
+        $('select[name="exerciseType"]').change(function() {
+            var type = $(this).val();
+            if (type === '1' || type === '2') {
+                $('#optionsGroup').show();
+            } else {
+                $('#optionsGroup').hide();
+            }
+        });
+
+        $("#form-exercise-add").validate({
+            focusCleanup: true
+        });
+
+        function submitHandler() {
+            if ($.validate.form()) {
+                var data = $("#form-exercise-add").serializeArray();
+                var status = $("input[id='status']").is(':checked') ? '0' : '1';
+                data.push({"name": "status", "value": status});
+
+                // 构建选项 JSON
+                var type = $('select[name="exerciseType"]').val();
+                if (type === '1' || type === '2') {
+                    var options = {};
+                    var optionA = $('input[name="optionA"]').val();
+                    var optionB = $('input[name="optionB"]').val();
+                    var optionC = $('input[name="optionC"]').val();
+                    var optionD = $('input[name="optionD"]').val();
+                    if (optionA) options.A = optionA;
+                    if (optionB) options.B = optionB;
+                    if (optionC) options.C = optionC;
+                    if (optionD) options.D = optionD;
+                    data.push({"name": "options", "value": JSON.stringify(options)});
+                }
+
+                $.operate.saveTab(prefix + "/add", data);
+            }
+        }
+    </script>
+</body>
+</html>

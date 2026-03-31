@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
+<head>
+	<th:block th:include="include :: header('新增文章')" />
+	<th:block th:include="include :: summernote-css" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-article-add">
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">文章标题：</label>
+            <div class="col-sm-8">
+                <input id="title" name="title" class="form-control" type="text" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">文章内容：</label>
+            <div class="col-sm-8">
+                <textarea id="content" name="content" class="form-control summernote" required></textarea>
+            </div>
+        </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">文章封面图片：</label>
+                <div class="col-sm-8">
+                    <input name="coverImg" class="form-control" type="hidden">
+                    <div class="image-upload">
+                        <img id="previewImage" style="max-width: 200px; max-height: 200px; display: none;">
+                        <input type="file" name="file" id="imageInput" accept="image/*" style="display: none;">
+                        <a class="btn btn-success btn-xs" onclick="$('#imageInput').click()"><i class="fa fa-upload"></i> 上传图片</a>
+                        <a class="btn btn-primary btn-xs" onclick="generateAIImage()"><i class="fa fa-magic"></i> AI生成图片</a>
+                        <a class="btn btn-danger btn-xs" onclick="clearImage()" style="display: none;" id="clearBtn"><i class="fa fa-trash"></i> 清除图片</a>
+                    </div>
+                </div>
+            </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">排序：</label>
+            <div class="col-sm-8">
+                <input id="sort" name="sort" class="form-control" type="number">
+            </div>
+        </div>
+        <div class="form-group">
+			<label class="col-sm-3 control-label">状态：</label>
+			<div class="col-sm-8">
+			    <div class="radio-box" th:each="dict : ${@dict.getType('sys_normal_disable')}">
+					<input type="radio" th:id="${dict.dictCode}" name="status" th:value="${dict.dictValue}" th:checked="${dict.default}">
+					<label th:for="${dict.dictCode}" th:text="${dict.dictLabel}"></label>
+				</div>
+			</div>
+		</div>
+		<div class="form-group">
+            <label class="col-sm-3 control-label">备注：</label>
+            <div class="col-sm-8">
+                <textarea id="remark" name="remark" class="form-control"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-3 control-label">版本：</label>
+            <div class="col-sm-8">
+                <input name="versionId" type="hidden">
+                <input name="versionName" type="hidden" class="form-control" readonly>
+                <div class="input-group">
+                    <select id="versionSelect" class="form-control">
+                        <option value="">请选择版本</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">科目：</label>
+            <div class="col-sm-8">
+                <input name="subjectId" type="hidden">
+                <input name="subjectName" type="hidden" class="form-control" readonly>
+                <div class="input-group">
+                    <select id="subjectSelect" class="form-control">
+                        <option value="">请选择科目</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">年级：</label>
+            <div class="col-sm-8">
+                <input name="gradeId" type="hidden">
+                <input name="gradeName" type="hidden" class="form-control" readonly>
+                <div class="input-group">
+                    <select id="gradeSelect" class="form-control">
+                        <option value="">请选择年级</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">册子：</label>
+            <div class="col-sm-8">
+                <input name="volumeId" type="hidden">
+                <input name="volumeName" type="hidden" class="form-control" readonly>
+                <div class="input-group">
+                    <select id="volumeSelect" class="form-control">
+                        <option value="">请选择册子</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">文章标签(逗号分隔)：</label>
+            <div class="col-sm-8">
+                <input id="tags" name="tags" class="form-control" type="text" placeholder="多个标签用逗号分隔">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">文章摘要：</label>
+            <div class="col-sm-8">
+                <textarea id="summary" name="summary" class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+    </form>
+    </div>
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: summernote-js" />
+    <script type="text/javascript">
+	var ctx = /*[[@{/}]]*/'';
+	var prefix = "article";
+
+	    $(function() {
+	        $('.summernote').summernote({
+	            height : '400px',
+	            lang : 'zh-CN',
+	            placeholder: '请输入文章内容',
+	            toolbar: [
+	                ['style', ['style']],
+	                ['font', ['bold', 'underline', 'clear']],
+	                ['fontname', ['fontname']],
+	                ['color', ['color']],
+	                ['para', ['ul', 'ol', 'paragraph']],
+	                ['table', ['table']],
+	                ['insert', ['link', 'picture']],
+	                ['view', ['fullscreen', 'codeview', 'help']]
+	            ],
+	            callbacks: {
+	                onImageUpload: function(files) {
+	                    sendFile(files[0], this);
+	                }
+	            }
+	        });
+
+	        // 图片上传处理
+	        $("#imageInput").change(function() {
+	            var file = this.files[0];
+	            if (!file) return;
+
+	            var formData = new FormData();
+	            formData.append("file", file);
+
+	            $.ajax({
+                url: "/common/upload/image/article",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.code == 0) {
+                        $("#previewImage").attr("src", response.data).show();
+                        $ ("input[name='coverImg']").val(response.data);
+                        $("#clearBtn").show();
+                        $.modal.msgSuccess("上传成功");
+                    } else {
+                        $.modal.msgError(response.msg);
+                    }
+                }
+            });
+	        });
+
+	        // 加载分类列表
+        // 模拟文章分类数据，避免API调用失败
+        var mockCategories = [
+            {categoryId: 1, name: '语文', status: '0'},
+            {categoryId: 2, name: '数学', status: '0'},
+            {categoryId: 3, name: '英语', status: '0'}
+        ];
+        
+        if (mockCategories && mockCategories.length > 0) {
+            var html = '<option value="">请选择分类</option>';
+            $.each(mockCategories, function(i, item) {
+                if (item.status == '0') { // 只显示正常状态的分类
+                    html += '<option value="' + item.categoryId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                }
+            });
+            $("#categorySelect").html(html);
+        }
+
+	        // 分类选择事件
+            $("#categorySelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='categoryId']").val($selected.val());
+                $("input[name='categoryName']").val($selected.data("name"));
+            });
+
+            // 加载分类数据
+            loadClassifications();
+        });
+
+        // 加载分类数据
+        function loadClassifications() {
+            $.ajax({
+                url: "/study/classification/all",
+                type: "get",
+                dataType: "json",
+                success: function(res) {
+                    if (res.code === 0) {
+                        console.log('分类数据:', res);
+                        
+                        // 加载版本
+                        if (res.versions && res.versions.length > 0) {
+                            var versionHtml = '<option value="">请选择版本</option>';
+                            $.each(res.versions, function(i, item) {
+                                if (item.status == '0') {
+                                    versionHtml += '<option value="' + item.versionId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#versionSelect").html(versionHtml);
+                        } else {
+                            console.log('版本数据为空');
+                        }
+
+                        // 加载科目
+                        if (res.subjects && res.subjects.length > 0) {
+                            var subjectHtml = '<option value="">请选择科目</option>';
+                            $.each(res.subjects, function(i, item) {
+                                if (item.status == '0') {
+                                    subjectHtml += '<option value="' + item.subjectId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#subjectSelect").html(subjectHtml);
+                        } else {
+                            console.log('科目数据为空');
+                        }
+
+                        // 加载年级
+                        if (res.grades && res.grades.length > 0) {
+                            var gradeHtml = '<option value="">请选择年级</option>';
+                            $.each(res.grades, function(i, item) {
+                                if (item.status == '0') {
+                                    gradeHtml += '<option value="' + item.gradeId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#gradeSelect").html(gradeHtml);
+                        } else {
+                            console.log('年级数据为空');
+                        }
+
+                        // 加载册子
+                        if (res.volumes && res.volumes.length > 0) {
+                            var volumeHtml = '<option value="">请选择册子</option>';
+                            $.each(res.volumes, function(i, item) {
+                                if (item.status == '0') {
+                                    volumeHtml += '<option value="' + item.volumeId + '" data-name="' + item.name + '">' + item.name + '</option>';
+                                }
+                            });
+                            $("#volumeSelect").html(volumeHtml);
+                        } else {
+                            console.log('册子数据为空');
+                        }
+                    } else {
+                        console.log('获取分类数据失败:', res.msg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('请求分类数据失败:', error);
+                }
+            });
+        }
+
+        // 版本选择事件
+        $("#versionSelect").change(function() {
+            var $selected = $(this).find("option:selected");
+            $("input[name='versionId']").val($selected.val());
+            $("input[name='versionName']").val($selected.data("name"));
+        });
+
+        // 科目选择事件
+        $("#subjectSelect").change(function() {
+            var $selected = $(this).find("option:selected");
+            $("input[name='subjectId']").val($selected.val());
+            $("input[name='subjectName']").val($selected.data("name"));
+        });
+
+        // 年级选择事件
+        $("#gradeSelect").change(function() {
+            var $selected = $(this).find("option:selected");
+            $("input[name='gradeId']").val($selected.val());
+            $("input[name='gradeName']").val($selected.data("name"));
+        });
+
+        // 册子选择事件
+        $("#volumeSelect").change(function() {
+            var $selected = $(this).find("option:selected");
+            $("input[name='volumeId']").val($selected.val());
+            $("input[name='volumeName']").val($selected.data("name"));
+        });
+
+	    function submitHandler() {
+        if ($.validate.form()) {
+            $.operate.save("/article/add", $('#form-article-add').serialize());
+        }
+    }
+
+	    function clearImage() {
+	        $("#previewImage").attr("src", "").hide();
+	        $("input[name='coverImg']").val("");
+	        $("#imageInput").val("");
+	        $("#clearBtn").hide();
+	    }
+
+	    function generateAIImage() {
+	        var title = $("#title").val();
+	        if (!title) {
+	            $.modal.msgError("请先输入文章标题");
+	            return;
+	        }
+	        
+	        $.modal.loading("正在生成图片，请稍候...");
+	        $.ajax({
+                url: "/ttl/generate/image/article",
+                type: "POST",
+                data: {
+                    title: title
+                },
+                success: function(response) {
+                    if (response.code == 0 && response.data) {
+                        $("#previewImage").attr("src", response.data).show();
+                        $ ("input[name='coverImg']").val(response.data);
+                        $("#clearBtn").show();
+                        $.modal.msgSuccess("图片生成成功");
+                    } else {
+                        $.modal.msgError(response.msg || "图片生成失败");
+                    }
+                },
+                error: function() {
+                    $.modal.msgError("图片生成请求失败");
+                },
+                complete: function() {
+                    $.modal.closeLoading();
+                }
+            });
+	    }
+    </script>
+</body>
+</html>

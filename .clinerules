@@ -1,0 +1,123 @@
+不要修改target下的文件，那里的代码是打包后用来执行的，修改那里的代码不会同步到正式的文件里。
+项目的sql文件在：D:\huangyizheng\jy-study\sql
+项目的用户端的页面在：D:\huangyizheng\jy-study\jy-study-admin\src\main\resources\templates\web
+项目的管理端的页面在：D:\huangyizheng\jy-study\jy-study-admin\src\main\resources\templates
+数据库的分析和解释在：D:\huangyizheng\jy-study\sql\数据库分析.md
+js、css等文件的引用优先使用：D:\huangyizheng\jy-study\jy-study-admin\src\main\resources\static 下的本地文件
+前台页面统一使用的处理逻辑文件： D:\huangyizheng\jy-study\jy-study-admin\src\main\resources\static\js\common.js
+
+
+和课程、文章等有关的java类（domain、mapper、service等）在jy-study-lesson模块中，而控制器controller都在jy-study-admin模块中。
+举例：D:\huangyizheng\jy-study\jy-study-lesson\src\main\java\com\jy\study\lesson\domain\StudyLesson.java
+D:\huangyizheng\jy-study\jy-study-lesson\src\main\java\com\jy\study\lesson\service\impl\StudyLessonServiceImpl.java
+D:\huangyizheng\jy-study\jy-study-lesson\src\main\java\com\jy\study\lesson\mapper\StudyLessonMapper.java
+D:\huangyizheng\jy-study\jy-study-lesson\src\main\java\com\jy\study\lesson\service\IStudyLessonService.java
+
+本项目使用若依框架开发，并且以若依项目为基础进行开发，若依项目地址：https://gitee.com/y_project/RuoYi
+若依框架的总体手册地址：http://doc.ruoyi.vip/ruoyi/
+若依框架的后台手册地址：http://doc.ruoyi.vip/ruoyi/document/htsc.html
+若依框架的前台手册地址：http://doc.ruoyi.vip/ruoyi/document/qdsc.html
+
+
+本项目的开发目标：
+本项目将要开发一个 结合AI的“多模态教育系统”，系统由管理员端和用户端两部分组成，各自包含不同的功能模块。以下是系统功能的详细结构化描述：
+### 管理员端
+1. **系统管理**
+   - 用户管理：管理用户信息和权限。
+   - 角色管理：定义和分配不同用户角色及其权限。
+   - 菜单管理：管理系统界面的菜单项。
+   - 系统日志：记录系统操作日志。
+
+2. **文章管理**
+   - 文章上传：上传新的文章内容。
+   - 文章修改：编辑现有文章信息。
+   - 文章删除：移除不再需要的文章。
+   - 文章查询：搜索和查看文章信息。
+
+3. **课程管理**
+   - 课程上传：上传新的课程内容。
+   - 课程修改：编辑现有课程信息。
+   - 课程删除：移除不再需要的课程。
+
+4. **AI管理**
+   - 知识库管理：维护和更新知识库内容。
+   - 模型管理：管理AI模型的训练和部署。
+   - 记录管理：管理AI系统的使用记录。
+
+5. **数据报表**
+   - 课程数据：生成和查看课程相关的数据报表。
+   - 学习数据：分析和展示学习数据。
+   - AI使用数据：统计和报告AI功能的使用情况。
+
+### 用户端
+1. **课程学习**
+   - 课程观看：浏览和学习课程内容。
+     - 教案浏览：查看课程教案。
+     - 音频播放：播放课程音频。
+     - 视频播放：观看课程视频。
+   - 课程操作：对课程进行点赞、收藏和智能推荐。
+   - AI总结：AI自动生成课程内容的总结。
+   - AI对话：基于课程内容与AI进行互动对话。
+
+2. **文章学习**
+   - 文章浏览：阅读和学习文章内容。
+   - 课程操作：对文章进行点赞、收藏和智能推荐。
+   - AI朗读：使用ai语音朗读文章。
+   - AI总结：AI自动生成文章内容的总结。
+   - AI生图：对文章内容进行生图。
+   - AI对话：基于文章内容与AI进行互动对话。
+
+3. **AI学习**
+   - 数字人对话：与虚拟数字人进行互动对话。
+   - 大模型对话：与大型AI模型进行深入对话。
+
+4. **用户中心**
+   - 用户管理：管理个人信息和账户设置。
+   - 学习管理：跟踪和管理学习进度。
+     - 学习记录：查看个人学习历史。
+     - 数据报表：查看个人学习数据的统计报表。
+     - 智能总结：获取学习内容的智能总结。
+
+这个系统设计旨在提供一个全面的教育平台，结合了传统的课程学习和先进的AI技术，以增强学习体验和效果。
+
+
+## 技术选型
+1、系统环境
+Java EE 8
+Servlet 3.0
+Apache Maven 3
+2、主框架
+Spring Boot 2.2.x
+Spring Framework 5.2.x
+Apache Shiro 1.7
+3、持久层
+Apache MyBatis 3.5.x
+Hibernate Validation 6.0.x
+Alibaba Druid 1.2.x
+4、视图层
+Bootstrap 3.3.7
+Thymeleaf 3.0.x
+
+## 内置功能:
+用户管理：用户是系统操作者，该功能主要完成系统用户配置。
+部门管理：配置系统组织机构（公司、部门、小组），树结构展现支持数据权限。
+岗位管理：配置系统用户所属担任职务。
+菜单管理：配置系统菜单，操作权限，按钮权限标识等。
+角色管理：角色菜单权限分配、设置角色按机构进行数据范围权限划分。
+字典管理：对系统中经常使用的一些较为固定的数据进行维护。
+参数管理：对系统动态配置常用参数。
+通知公告：系统通知公告信息发布维护。
+操作日志：系统正常操作日志记录和查询；系统异常信息日志记录和查询。
+登录日志：系统登录日志记录查询包含登录异常。
+在线用户：当前系统中活跃用户状态监控。
+定时任务：在线（添加、修改、删除)任务调度包含执行结果日志。
+代码生成：前后端代码的生成（java、html、xml、sql)支持CRUD下载 。
+系统接口：根据业务代码自动生成相关的api接口文档。
+服务监控：监视当前系统CPU、内存、磁盘、堆栈等相关信息。
+缓存监控：对系统的缓存查询，查看、清理等操作。
+在线构建器：拖动表单元素生成相应的HTML代码。
+连接池监视：监视当期系统数据库连接池状态，可进行分析SQL找出系统性能瓶颈
+
+浏览量的逻辑： 只有登录用户才记录详细的浏览记录，游客只记录总浏览量
+
+configService.getKey的值要在数据库(sys_config表)中存在，否则会报错

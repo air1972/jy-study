@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('题目列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>知识点ID：</label>
+                                <input type="text" name="knowledgePointId"/>
+                            </li>
+                            <li>
+                                <label>题目类型：</label>
+                                <select name="type">
+                                    <option value="">所有</option>
+                                    <option value="1">选择题</option>
+                                    <option value="2">填空题</option>
+                                    <option value="3">判断题</option>
+                                    <option value="4">简答题</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="study:exercise:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="study:exercise:edit">
+                    <i class="fa fa-edit"></i> 修改
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="study:exercise:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-info" onclick="generateWithAi()" shiro:hasPermission="study:exercise:add">
+                    <i class="fa fa-magic"></i> AI 生成
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 生成题目弹窗 -->
+    <div class="modal fade" id="aiGenerateModal" tabindex="-1" role="dialog" aria-labelledby="aiGenerateModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="aiGenerateModalLabel">AI 生成题目</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="aiGenerateForm">
+                        <div class="form-group">
+                            <label>关联知识点</label>
+                            <select id="aiKnowledgePointId" class="form-control">
+                                <!-- 动态加载知识点 -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAiGenerate()">生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('study:exercise:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('study:exercise:remove')}]];
+        var prefix = ctx + "study/exercise";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                modalName: "题目",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'id',
+                    title: '题目ID'
+                },
+                {
+                    field: 'knowledgePointId',
+                    title: '知识点ID'
+                },
+                {
+                    field: 'type',
+                    title: '题目类型',
+                    formatter: function(value, row, index) {
+                        if (value == 1) return '选择题';
+                        if (value == 2) return '填空题';
+                        if (value == 3) return '判断题';
+                        if (value == 4) return '简答题';
+                        return '';
+                    }
+                },
+                {
+                    field: 'content',
+                    title: '题目内容'
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.id + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+
+        function generateWithAi() {
+            $.get(prefix + "/knowledge-points", function(result) {
+                if (result.code == 0) {
+                    var options = "";
+                    result.data.forEach(function(item) {
+                        options += '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $("#aiKnowledgePointId").html(options);
+                    $("#aiGenerateModal").modal('show');
+                } else {
+                    $.modal.alertError(result.msg);
+                }
+            });
+        }
+
+        function submitAiGenerate() {
+            var knowledgePointId = $("#aiKnowledgePointId").val();
+            if (!knowledgePointId) {
+                $.modal.alertWarning("请选择知识点");
+                return;
+            }
+            $.modal.loading("正在生成中，请稍后...");
+            $.ajax({
+                url: prefix + "/ai-generate",
+                type: "POST",
+                data: { knowledgePointId: knowledgePointId },
+                success: function(result) {
+                    $.modal.closeLoading();
+                    if (result.code == 0) {
+                        $.modal.msgSuccess(result.msg);
+                        $.table.refresh();
+                        $("#aiGenerateModal").modal('hide');
+                    } else {
+                        $.modal.alertError(result.msg);
+                    }
+                },
+                error: function() {
+                    $.modal.closeLoading();
+                    $.modal.alertError("网络错误，请稍后重试");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

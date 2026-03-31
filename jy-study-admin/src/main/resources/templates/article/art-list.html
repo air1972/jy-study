@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('文章列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="article-form">
+					<div class="select-list">
+						<ul>
+							<li>
+							文章标题：<input type="text" name="title"/>
+						</li>
+						<li>
+							文章标签：<input type="text" name="tags"/>
+							</li>
+							<li>
+								文章摘要：<input type="text" name="summary"/>
+							</li>
+							<li>
+								状态：<select name="status" th:with="type=${@dict.getType('sys_normal_disable')}">
+									<option value="">所有</option>
+									<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+								</select>
+							</li>
+							<li class="select-time">
+								<label>创建时间： </label>
+								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+								<span>-</span>
+								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="btn-group-sm" id="toolbar" role="group">
+		        <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="article:add">
+		            <i class="fa fa-plus"></i> 新增
+		        </a>
+	        </div>
+	        <div class="col-sm-12 select-table table-striped">
+	            <table id="bootstrap-table"></table>
+	        </div>
+	    </div>
+	</div>
+    <th:block th:include="include :: footer" />
+    <div class="modal fade" id="generateModal" tabindex="-1" role="dialog" aria-labelledby="generateModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="generateModalLabel">生成AI试题</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateForm">
+                        <input type="hidden" id="articleId" name="articleId">
+                        <div class="form-group">
+                            <label for="xuanze">选择题数量</label>
+                            <input type="number" class="form-control" id="xuanze" name="xuanze" value="5" min="0" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="tiankong">填空题数量</label>
+                            <input type="number" class="form-control" id="tiankong" name="tiankong" value="3" min="0" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="panduan">判断题数量</label>
+                            <input type="number" class="form-control" id="panduan" name="panduan" value="5" min="0" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="jianda">简答题数量</label>
+                            <input type="number" class="form-control" id="jianda" name="jianda" value="2" min="0" max="5">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitGenerate()">生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('article:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('article:remove')}]];
+        var statusDatas = [[${@dict.getType('sys_normal_disable')}]];
+        var prefix = ctx + "article";
+
+        $(function() {
+            var options = {
+                url: prefix + "/listData",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                sortName: "createTime",
+                sortOrder: "desc",
+                modalName: "文章",
+                escape: true,
+                showPageGo: true,
+                rememberSelected: true,
+                responseHandler: function(res) {
+                    if (res.code == 0) {
+                        return { rows: res.rows, total: res.total };
+                    } else {
+                        $.modal.alertError(res.msg);
+                        return { rows: [], total: 0 };
+                    }
+                },
+                onLoadError: function(status, xhr) {
+                    if (xhr.statusText !== "abort") {
+                        $.modal.alertError("数据加载失败，请刷新页面重试");
+                    }
+                },
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'articleId',
+                    title: '文章ID',
+                    sortable: true,
+                    sortName: 'article_id'
+                },
+                {
+                    field: 'title',
+                    title: '文章标题',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value);
+                    }
+                },
+
+                {
+                    field: 'tags',
+                    title: '文章标签',
+                    formatter: function(value, row, index) {
+                        if (!value) return '';
+                        var tags = value.split(',');
+                        var html = [];
+                        for (var i = 0; i < tags.length; i++) {
+                            html.push('<span class="badge badge-info">' + tags[i] + '</span>');
+                        }
+                        return html.join(' ');
+                    }
+                },
+                {
+                    field: 'summary',
+                    title: '文章摘要',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value, 30);
+                    }
+                },
+                {
+                    field: 'viewCount',
+                    title: '阅读量',
+                    sortable: true,
+                    sortName: 'view_count'
+                },
+                {
+                    field: 'likeCount',
+                    title: '点赞数',
+                    sortable: true,
+                    sortName: 'like_count'
+                },
+                {
+                    field: 'collectCount',
+                    title: '收藏数',
+                    sortable: true,
+                    sortName: 'collect_count'
+                },
+                {
+                    field: 'status',
+                    title: '状态',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        return $.table.selectDictLabel(statusDatas, value);
+                    }
+                },
+                {
+                    field: 'sort',
+                    title: '排序',
+                    align: 'center'
+                },
+                {
+                    field: 'createBy',
+                    title: '创建者'
+                },
+                {
+                    field: 'createTime',
+                    title: '创建时间',
+					sortable: true,
+					sortName: 'create_time'
+                },
+                {
+                    field: 'updateTime',
+                    title: '更新时间',
+					sortable: true,
+					sortName: 'update_time'
+                },
+                {
+                    field: 'remark',
+                    title: '备注',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value, 10, "open");
+                    }
+                },
+                {
+                    field: 'coverImg',
+                    title: '文章封面图片',
+                    visible: false
+                },
+                {
+                    field: 'cozeId',
+                    title: 'AI试题',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        if (value) {
+                            return '<a class="btn btn-info btn-xs" onclick="viewAiQuestions(\'' + row.articleId + '\')"><i class="fa fa-file-text"></i> 试题详情</a> <a class="btn btn-danger btn-xs" onclick="deleteAiQuestions(\'' + row.articleId + '\')"><i class="fa fa-trash"></i> 删除试题</a>';
+                        } else {
+                            return '<a class="btn btn-primary btn-xs" onclick="generateAiQuestions(\'' + row.articleId + '\')"><i class="fa fa-magic"></i> 生成试题</a>';
+                        }
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.articleId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="detail(\'' + row.articleId + '\')"><i class="fa fa-search"></i>详情</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.articleId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+
+        
+        /* 详情查看 */
+        function detail(id) {
+            var url = prefix + '/detail/' + id;
+            $.modal.open("查看文章", url);
+        }
+
+        function generateAiQuestions(articleId) {
+            $("#articleId").val(articleId);
+            $("#generateModal").modal('show');
+        }
+
+        function submitGenerate() {
+            var articleId = $("#articleId").val();
+            var data = {
+                xuanze: $("#xuanze").val(),
+                tiankong: $("#tiankong").val(),
+                panduan: $("#panduan").val(),
+                jianda: $("#jianda").val()
+            };
+            
+            $("#generateModal").modal('hide');
+            $.modal.loading("正在生成，请稍候...");
+            
+            $.ajax({
+                url: ctx + "coze/generate/questions/" + articleId,
+                type: "POST",
+                data: data,
+                timeout: 360000,
+                success: function(result) {
+                    if (result.code == 0) {
+                        $.modal.closeLoading();
+                        $.modal.msgSuccess("生成成功");
+                        setTimeout(function() {
+                            $.table.refresh();
+                        }, 1000);
+                    } else {
+                        $.modal.closeLoading();
+                        $.modal.alertError("生成失败：" + result.msg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $.modal.closeLoading();
+                    if (status === 'timeout') {
+                        $.modal.alertError("请求超时，请稍后重试");
+                    } else {
+                        $.modal.alertError("系统错误：" + error);
+                    }
+                },
+                complete: function() {
+                    setTimeout(function() {
+                        $.table.refresh();
+                    }, 1000);
+                }
+            });
+        }
+
+        function viewAiQuestions(articleId) {
+            var url = ctx + "article/ai-questions/" + articleId;
+            $.modal.open("查看AI试题", url);
+        }
+
+        function deleteAiQuestions(articleId) {
+            $.modal.confirm("确定要删除该文章的AI试题吗？", function() {
+                $.ajax({
+                    url: ctx + "coze/delete/questions/" + articleId,
+                    type: "POST",
+                    success: function(result) {
+                        if (result.code == 0) {
+                            $.modal.msgSuccess("删除成功");
+                            $.table.refresh();
+                        } else {
+                            $.modal.alertError("删除失败：" + result.msg);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $.modal.alertError("系统错误：" + error);
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

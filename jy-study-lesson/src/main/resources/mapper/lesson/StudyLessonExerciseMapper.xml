@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyLessonExerciseMapper">
+    
+    <resultMap type="StudyLessonExercise" id="StudyLessonExerciseResult">
+        <result property="exerciseId"    column="exercise_id"    />
+        <result property="lessonId"    column="lesson_id"    />
+        <result property="lessonTitle" column="lesson_title" />
+        <result property="title"    column="title"    />
+        <result property="exerciseType"    column="exercise_type"    />
+        <result property="options"    column="options"    />
+        <result property="answer"    column="answer"    />
+        <result property="analysis"    column="analysis"    />
+        <result property="score"    column="score"    />
+        <result property="difficulty"    column="difficulty"    />
+        <result property="sort"    column="sort"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectStudyLessonExerciseVo">
+        select e.exercise_id,
+               e.lesson_id,
+               l.title as lesson_title,
+               e.title,
+               e.exercise_type,
+               e.options,
+               e.answer,
+               e.analysis,
+               e.score,
+               e.difficulty,
+               e.sort,
+               e.status,
+               e.create_by,
+               e.create_time,
+               e.update_by,
+               e.update_time,
+               e.remark
+        from study_lesson_exercise e
+        left join study_lesson l on e.lesson_id = l.lesson_id
+    </sql>
+
+    <select id="selectStudyLessonExerciseList" parameterType="StudyLessonExercise" resultMap="StudyLessonExerciseResult">
+        <include refid="selectStudyLessonExerciseVo"/>
+        <where>  
+            <if test="lessonId != null">
+                AND e.lesson_id = #{lessonId}
+            </if>
+            <if test="title != null and title != ''">
+                AND e.title like concat('%', #{title}, '%')
+            </if>
+            <if test="exerciseType != null and exerciseType != ''">
+                AND e.exercise_type = #{exerciseType}
+            </if>
+            <if test="status != null and status != ''">
+                AND e.status = #{status}
+            </if>
+        </where>
+        order by e.sort asc, e.create_time desc
+    </select>
+    
+    <select id="selectStudyLessonExerciseById" parameterType="Long" resultMap="StudyLessonExerciseResult">
+        <include refid="selectStudyLessonExerciseVo"/>
+        where e.exercise_id = #{exerciseId}
+    </select>
+
+    <select id="selectStudyLessonExerciseByLessonId" parameterType="Long" resultMap="StudyLessonExerciseResult">
+        <include refid="selectStudyLessonExerciseVo"/>
+        where e.lesson_id = #{lessonId} and e.status = '0'
+        order by e.sort asc, e.create_time desc
+    </select>
+        
+    <insert id="insertStudyLessonExercise" parameterType="StudyLessonExercise" useGeneratedKeys="true" keyProperty="exerciseId">
+        insert into study_lesson_exercise
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="lessonId != null">lesson_id,</if>
+            <if test="versionId != null">version_id,</if>
+            <if test="versionName != null and versionName != ''">version_name,</if>
+            <if test="subjectId != null">subject_id,</if>
+            <if test="subjectName != null and subjectName != ''">subject_name,</if>
+            <if test="gradeId != null">grade_id,</if>
+            <if test="gradeName != null and gradeName != ''">grade_name,</if>
+            <if test="volumeId != null">volume_id,</if>
+            <if test="volumeName != null and volumeName != ''">volume_name,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="exerciseType != null">exercise_type,</if>
+            <if test="options != null">options,</if>
+            <if test="answer != null">answer,</if>
+            <if test="analysis != null">analysis,</if>
+            <if test="score != null">score,</if>
+            <if test="difficulty != null">difficulty,</if>
+            <if test="sort != null">sort,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="lessonId != null">#{lessonId},</if>
+            <if test="versionId != null">#{versionId},</if>
+            <if test="versionName != null and versionName != ''">#{versionName},</if>
+            <if test="subjectId != null">#{subjectId},</if>
+            <if test="subjectName != null and subjectName != ''">#{subjectName},</if>
+            <if test="gradeId != null">#{gradeId},</if>
+            <if test="gradeName != null and gradeName != ''">#{gradeName},</if>
+            <if test="volumeId != null">#{volumeId},</if>
+            <if test="volumeName != null and volumeName != ''">#{volumeName},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="exerciseType != null">#{exerciseType},</if>
+            <if test="options != null">#{options},</if>
+            <if test="answer != null">#{answer},</if>
+            <if test="analysis != null">#{analysis},</if>
+            <if test="score != null">#{score},</if>
+            <if test="difficulty != null">#{difficulty},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateStudyLessonExercise" parameterType="StudyLessonExercise">
+        update study_lesson_exercise
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="lessonId != null">lesson_id = #{lessonId},</if>
+            <if test="versionId != null">version_id = #{versionId},</if>
+            <if test="versionName != null and versionName != ''">version_name = #{versionName},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="subjectName != null and subjectName != ''">subject_name = #{subjectName},</if>
+            <if test="gradeId != null">grade_id = #{gradeId},</if>
+            <if test="gradeName != null and gradeName != ''">grade_name = #{gradeName},</if>
+            <if test="volumeId != null">volume_id = #{volumeId},</if>
+            <if test="volumeName != null and volumeName != ''">volume_name = #{volumeName},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="exerciseType != null">exercise_type = #{exerciseType},</if>
+            <if test="options != null">options = #{options},</if>
+            <if test="answer != null">answer = #{answer},</if>
+            <if test="analysis != null">analysis = #{analysis},</if>
+            <if test="score != null">score = #{score},</if>
+            <if test="difficulty != null">difficulty = #{difficulty},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where exercise_id = #{exerciseId}
+    </update>
+
+    <delete id="deleteStudyLessonExerciseById" parameterType="Long">
+        delete from study_lesson_exercise where exercise_id = #{exerciseId}
+    </delete>
+
+    <delete id="deleteStudyLessonExerciseByIds" parameterType="String">
+        delete from study_lesson_exercise where exercise_id in 
+        <foreach item="exerciseId" collection="array" open="(" separator="," close=")">
+            #{exerciseId}
+        </foreach>
+    </delete>
+</mapper>

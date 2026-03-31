@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('编辑课程练习')" />
+    <th:block th:include="include :: select2-css" />
+    <style>
+        .form-control {
+            border-radius: 4px;
+        }
+        .form-control:focus {
+            border-color: #2196F3;
+            box-shadow: 0 0 0 0.2rem rgba(33,150,243,.25);
+        }
+        .btn-primary {
+            background-color: #2196F3;
+            border-color: #2196F3;
+        }
+        .btn-primary:hover {
+            background-color: #1976D2;
+            border-color: #1976D2;
+        }
+    </style>
+</head>
+<body class="gray-bg">
+    <div class="wrapper wrapper-content animated fadeInRight">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="ibox">
+                    <div class="ibox-body">
+                        <form class="form-horizontal m" id="form-exercise-edit">
+                            <input type="hidden" name="exerciseId" th:value="${studyLessonExercise.exerciseId}"/>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">选择课程：</label>
+                                <div class="col-sm-8">
+                                    <select class="form-control" name="lessonId" id="lessonSelect" required>
+                                        <option value="">请选择课程</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">版本：</label>
+                                <div class="col-sm-8">
+                                    <input name="versionId" type="hidden">
+                                    <input name="versionName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="versionSelect" class="form-control">
+                                            <option value="">请选择版本</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">科目：</label>
+                                <div class="col-sm-8">
+                                    <input name="subjectId" type="hidden">
+                                    <input name="subjectName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="subjectSelect" class="form-control">
+                                            <option value="">请选择科目</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">年级：</label>
+                                <div class="col-sm-8">
+                                    <input name="gradeId" type="hidden">
+                                    <input name="gradeName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="gradeSelect" class="form-control">
+                                            <option value="">请选择年级</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">册子：</label>
+                                <div class="col-sm-8">
+                                    <input name="volumeId" type="hidden">
+                                    <input name="volumeName" type="hidden" class="form-control" readonly>
+                                    <div class="input-group">
+                                        <select id="volumeSelect" class="form-control">
+                                            <option value="">请选择册子</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">练习标题：</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="text" name="title" th:value="${studyLessonExercise.title}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">习题内容：</label>
+                                <div class="col-sm-8">
+                                    <textarea class="form-control" id="questionContent" rows="4" placeholder="请输入习题内容（题干）"></textarea>
+                                    <span class="help-block m-b-none">用于前台展示题目内容</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">题目类型：</label>
+                                <div class="col-sm-8">
+                                    <select class="form-control" name="exerciseType" id="exerciseType" required>
+                                        <option value="1" th:selected="${studyLessonExercise.exerciseType == '1'}">单选题</option>
+                                        <option value="2" th:selected="${studyLessonExercise.exerciseType == '2'}">多选题</option>
+                                        <option value="3" th:selected="${studyLessonExercise.exerciseType == '3'}">判断题</option>
+                                        <option value="4" th:selected="${studyLessonExercise.exerciseType == '4'}">简答题</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" id="optionsGroup">
+                                <label class="col-sm-3 control-label">选项：</label>
+                                <div class="col-sm-8">
+                                    <div class="row" style="margin-bottom: 10px;">
+                                        <div class="col-sm-6" style="margin-bottom: 10px;">
+                                            <input type="text" class="form-control" id="optionA" placeholder="选项 A">
+                                        </div>
+                                        <div class="col-sm-6" style="margin-bottom: 10px;">
+                                            <input type="text" class="form-control" id="optionB" placeholder="选项 B">
+                                        </div>
+                                        <div class="col-sm-6" style="margin-bottom: 10px;">
+                                            <input type="text" class="form-control" id="optionC" placeholder="选项 C">
+                                        </div>
+                                        <div class="col-sm-6" style="margin-bottom: 10px;">
+                                            <input type="text" class="form-control" id="optionD" placeholder="选项 D">
+                                        </div>
+                                    </div>
+                                    <span class="help-block m-b-none">仅单选题/多选题需要填写选项</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="options" id="options" />
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">正确答案：</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="text" name="answer" th:value="${studyLessonExercise.answer}" required>
+                                    <span class="help-block m-b-none">单选题/判断题填字母如 A，多选题填 AB，简答题填写参考答案</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">答案解析：</label>
+                                <div class="col-sm-8">
+                                    <textarea class="form-control" name="analysis" rows="3" th:text="${studyLessonExercise.analysis}"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">分值：</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="number" name="score" th:value="${studyLessonExercise.score}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">难度：</label>
+                                <div class="col-sm-8">
+                                    <select class="form-control" name="difficulty" required>
+                                        <option value="1" th:selected="${studyLessonExercise.difficulty == '1'}">简单</option>
+                                        <option value="2" th:selected="${studyLessonExercise.difficulty == '2'}">中等</option>
+                                        <option value="3" th:selected="${studyLessonExercise.difficulty == '3'}">困难</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">排序：</label>
+                                <div class="col-sm-8">
+                                    <input class="form-control" type="number" name="sort" th:value="${studyLessonExercise.sort}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">状态：</label>
+                                <div class="col-sm-8">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" name="status" value="0" th:checked="${studyLessonExercise.status == '0'}">
+                                        <span class="toggle-switch-label"></span>
+                                    </label>
+                                    <span class="help-block m-b-none">正常/停用</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">备注：</label>
+                                <div class="col-sm-8">
+                                    <textarea class="form-control" name="remark" rows="3" th:text="${studyLessonExercise.remark}"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="ibox-footer text-center">
+                        <button type="button" class="btn btn-primary" onclick="submit()"><i class="fa fa-check"></i> 保存</button>
+                        <button type="button" class="btn btn-default" onclick="$.modal.close()"><i class="fa fa-times"></i> 取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block th:include="include :: footer" />
+    <th:block th:include="include :: select2-js" />
+    <script th:inline="javascript">
+        var ctx = /*[[@{/}]]*/'';
+        var prefix = ctx + "lesson/exercise";
+        
+        // 加载课程列表
+        function loadLessonList() {
+            $.ajax({
+                url: ctx + 'lesson/listAll',
+                type: 'get',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.code === 0) {
+                        var html = '<option value="">请选择课程</option>';
+                        var currentLessonId = [[${studyLessonExercise.lessonId}]];
+                        res.rows.forEach(function(lesson) {
+                            var selected = lesson.lessonId == currentLessonId ? 'selected' : '';
+                            html += '<option value="' + lesson.lessonId + '" ' + selected + '>' + lesson.title + '</option>';
+                        });
+                        $('#lessonSelect').html(html);
+                        // 重新初始化 select2
+                        $('#lessonSelect').select2({
+                            placeholder: '请选择课程',
+                            allowClear: true
+                        });
+                    }
+                }
+            });
+        }
+        
+        $(function() {
+            loadLessonList();
+            initExerciseContentAndOptions();
+            loadClassifications();
+        });
+
+        // 加载分类数据
+        function loadClassifications() {
+            $.ajax({
+                url: ctx + "study/classification/all",
+                type: "get",
+                dataType: "json",
+                success: function(res) {
+                    if (res.code == 0) {
+                        // 加载版本
+                        if (res.data.versions && res.data.versions.length > 0) {
+                            var versionHtml = '<option value="">请选择版本</option>';
+                            var currentVersionId = [[${studyLessonExercise.versionId}]];
+                            $.each(res.data.versions, function(i, item) {
+                                if (item.status == '0') {
+                                    var selected = item.versionId == currentVersionId ? 'selected' : '';
+                                    versionHtml += '<option value="' + item.versionId + '" data-name="' + item.name + '" ' + selected + '>' + item.name + '</option>';
+                                }
+                            });
+                            $("#versionSelect").html(versionHtml);
+                        }
+
+                        // 加载科目
+                        if (res.data.subjects && res.data.subjects.length > 0) {
+                            var subjectHtml = '<option value="">请选择科目</option>';
+                            var currentSubjectId = [[${studyLessonExercise.subjectId}]];
+                            $.each(res.data.subjects, function(i, item) {
+                                if (item.status == '0') {
+                                    var selected = item.subjectId == currentSubjectId ? 'selected' : '';
+                                    subjectHtml += '<option value="' + item.subjectId + '" data-name="' + item.name + '" ' + selected + '>' + item.name + '</option>';
+                                }
+                            });
+                            $("#subjectSelect").html(subjectHtml);
+                        }
+
+                        // 加载年级
+                        if (res.data.grades && res.data.grades.length > 0) {
+                            var gradeHtml = '<option value="">请选择年级</option>';
+                            var currentGradeId = [[${studyLessonExercise.gradeId}]];
+                            $.each(res.data.grades, function(i, item) {
+                                if (item.status == '0') {
+                                    var selected = item.gradeId == currentGradeId ? 'selected' : '';
+                                    gradeHtml += '<option value="' + item.gradeId + '" data-name="' + item.name + '" ' + selected + '>' + item.name + '</option>';
+                                }
+                            });
+                            $("#gradeSelect").html(gradeHtml);
+                        }
+
+                        // 加载册子
+                        if (res.data.volumes && res.data.volumes.length > 0) {
+                            var volumeHtml = '<option value="">请选择册子</option>';
+                            var currentVolumeId = [[${studyLessonExercise.volumeId}]];
+                            $.each(res.data.volumes, function(i, item) {
+                                if (item.status == '0') {
+                                    var selected = item.volumeId == currentVolumeId ? 'selected' : '';
+                                    volumeHtml += '<option value="' + item.volumeId + '" data-name="' + item.name + '" ' + selected + '>' + item.name + '</option>';
+                                }
+                            });
+                            $("#volumeSelect").html(volumeHtml);
+                        }
+                    }
+                }
+            });
+
+            // 版本选择事件
+            $("#versionSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='versionId']").val($selected.val());
+                $("input[name='versionName']").val($selected.data("name"));
+            });
+
+            // 科目选择事件
+            $("#subjectSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='subjectId']").val($selected.val());
+                $("input[name='subjectName']").val($selected.data("name"));
+            });
+
+            // 年级选择事件
+            $("#gradeSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='gradeId']").val($selected.val());
+                $("input[name='gradeName']").val($selected.data("name"));
+            });
+
+            // 册子选择事件
+            $("#volumeSelect").change(function() {
+                var $selected = $(this).find("option:selected");
+                $("input[name='volumeId']").val($selected.val());
+                $("input[name='volumeName']").val($selected.data("name"));
+            });
+        }
+        
+        function submit() {
+            buildOptionsBeforeSubmit();
+            $.modal.loading("正在处理中...");
+            $.operate.post(prefix + "/edit", $("#form-exercise-edit").serialize());
+        }
+
+        function initExerciseContentAndOptions() {
+            var rawOptions = /*[[${studyLessonExercise.options}]]*/ '';
+            var parsed = parseOptionsPayload(rawOptions);
+            if (parsed.stem) {
+                $("#questionContent").val(parsed.stem);
+            }
+            $("#optionA").val(parsed.options.A || '');
+            $("#optionB").val(parsed.options.B || '');
+            $("#optionC").val(parsed.options.C || '');
+            $("#optionD").val(parsed.options.D || '');
+            $("#options").val(rawOptions || '');
+        }
+
+        function buildOptionsBeforeSubmit() {
+            var type = $("#exerciseType").val();
+            var payload = {};
+
+            var stem = $.trim($("#questionContent").val());
+            if (stem) {
+                payload.stem = stem;
+            }
+
+            if (type === '1' || type === '2') {
+                var a = $.trim($("#optionA").val());
+                var b = $.trim($("#optionB").val());
+                var c = $.trim($("#optionC").val());
+                var d = $.trim($("#optionD").val());
+                if (a) payload.A = a;
+                if (b) payload.B = b;
+                if (c) payload.C = c;
+                if (d) payload.D = d;
+            }
+
+            $("#options").val(Object.keys(payload).length ? JSON.stringify(payload) : '');
+        }
+
+        function parseOptionsPayload(raw) {
+            var result = { stem: '', options: {} };
+            if (raw === null || raw === undefined || raw === '') {
+                return result;
+            }
+
+            var data = raw;
+            if (typeof data === 'string') {
+                var text = $.trim(data);
+                if (!text) {
+                    return result;
+                }
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    return parsePlainTextPayload(text);
+                }
+            }
+
+            if ($.isArray(data)) {
+                for (var i = 0; i < data.length; i++) {
+                    var v = data[i];
+                    if (v !== null && v !== undefined && String(v).trim() !== '') {
+                        result.options[String.fromCharCode(65 + i)] = String(v).trim();
+                    }
+                }
+                return result;
+            }
+
+            if (typeof data === 'object') {
+                if (data.stem || data.question || data.title) {
+                    result.stem = String(data.stem || data.question || data.title).trim();
+                }
+                for (var key in data) {
+                    if (!data.hasOwnProperty(key)) continue;
+                    if (key === 'stem' || key === 'question' || key === 'title') continue;
+                    if (data[key] !== null && data[key] !== undefined && String(data[key]).trim() !== '') {
+                        result.options[key.toUpperCase()] = String(data[key]).trim();
+                    }
+                }
+            }
+            return result;
+        }
+
+        function parsePlainTextPayload(text) {
+            var result = { stem: '', options: {} };
+            if (!text) {
+                return result;
+            }
+            var normalized = text.replace(/\r/g, '');
+            if (normalized.indexOf('|') !== -1 && /[A-Za-z][\.\s:：]/.test(normalized)) {
+                normalized = normalized.replace(/\|/g, '\n');
+            }
+            var lines = normalized.split('\n');
+            var optionPattern = /^([A-Za-z])[\.\:：、\)]\s*(.*)$/;
+            var hasLabeledOption = false;
+            for (var h = 0; h < lines.length; h++) {
+                var checkLine = $.trim(lines[h]);
+                if (!checkLine) continue;
+                if (optionPattern.test(checkLine)) {
+                    hasLabeledOption = true;
+                    break;
+                }
+            }
+
+            for (var i = 0; i < lines.length; i++) {
+                var line = $.trim(lines[i]);
+                if (!line) continue;
+                var m = line.match(optionPattern);
+                if (m) {
+                    result.options[m[1].toUpperCase()] = $.trim(m[2]);
+                } else if (!result.stem) {
+                    result.stem = line;
+                }
+            }
+
+            if (!hasLabeledOption) {
+                var allText = $.trim(lines.join(' '));
+                var tokens = allText.split(/[,\s，、;；]+/).filter(function(item) { return item && $.trim(item); });
+                if (tokens.length >= 2) {
+                    result.stem = '';
+                    result.options = {};
+                    for (var j = 0; j < tokens.length; j++) {
+                        result.options[String.fromCharCode(65 + j)] = $.trim(tokens[j]);
+                    }
+                }
+            }
+            return result;
+        }
+        
+        // 根据题型显示/隐藏选项输入框
+        $("#exerciseType").change(function() {
+            var type = $(this).val();
+            if (type === '1' || type === '2') {
+                $("#optionsGroup").show();
+            } else {
+                $("#optionsGroup").hide();
+            }
+        });
+        
+        // 初始化显示状态
+        $("#exerciseType").trigger("change");
+    </script>
+</body>
+</html>

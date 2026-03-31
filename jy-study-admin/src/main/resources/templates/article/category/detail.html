@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('文章分类详细')" />
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" th:object="${studyArticleCategory}">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">分类名称：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{name}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">分类编码：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{code}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">父分类ID：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{parentId}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">显示顺序：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{sort}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">状态：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{status == '0' ? '正常' : '停用'}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">创建时间：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{#dates.format(createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">更新时间：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{#dates.format(updateTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">备注：</label>
+                <div class="col-sm-8">
+                    <p class="form-control-static" th:text="*{remark}"></p>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+</body>
+</html> 

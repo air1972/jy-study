@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会员续费</title>
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f7fb; }
+        .renew-wrap { max-width: 520px; margin: 50px auto; }
+        .renew-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, .08);
+            padding: 28px 24px;
+        }
+        .plan-btn { min-width: 110px; margin-right: 8px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+<div class="renew-wrap">
+    <div class="renew-card">
+        <h4><i class="fa fa-diamond"></i> 会员续费（免登录）</h4>
+        <p class="text-muted">适用于试用过期后无法登录的用户，续费后会自动恢复账号。</p>
+
+        <div class="form-group">
+            <label>登录账号</label>
+            <input id="loginName" type="text" class="form-control" placeholder="请输入登录账号">
+        </div>
+        <div class="form-group">
+            <label>登录密码</label>
+            <input id="password" type="password" class="form-control" placeholder="请输入登录密码">
+        </div>
+
+        <div class="form-group">
+            <label>选择套餐</label><br>
+            <button class="btn btn-outline-primary plan-btn" onclick="renew(1)">1个月 ¥29.9</button>
+            <button class="btn btn-outline-primary plan-btn" onclick="renew(3)">3个月 ¥79.9</button>
+            <button class="btn btn-outline-primary plan-btn" onclick="renew(6)">6个月 ¥149.9</button>
+            <button class="btn btn-outline-primary plan-btn" onclick="renew(12)">12个月 ¥269.9</button>
+        </div>
+
+        <div class="text-muted">
+            续费后请返回 <a href="/login">登录页</a> 重新登录。
+        </div>
+    </div>
+</div>
+
+<script src="/js/jquery.min.js"></script>
+<script src="/ajax/libs/layer/layer.min.js"></script>
+<script>
+    function renew(months) {
+        var loginName = $("#loginName").val();
+        var password = $("#password").val();
+        if (!loginName || !password) {
+            layer.msg("请输入账号和密码", {icon: 2});
+            return;
+        }
+        $.post("/web/member/renew", {
+            loginName: loginName,
+            password: password,
+            months: months
+        }, function (res) {
+            if (res.code === 0) {
+                var expire = res.data && res.data.vipExpireTime ? res.data.vipExpireTime : "";
+                layer.alert("续费成功，会员到期时间：" + expire + "，请重新登录。", {icon: 1});
+            } else {
+                layer.msg(res.msg || "续费失败", {icon: 2});
+            }
+        });
+    }
+</script>
+</body>
+</html>
+

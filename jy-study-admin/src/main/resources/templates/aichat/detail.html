@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('对话详情')" />
+    <style>
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .system {
+            background-color: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+        }
+        .user {
+            background-color: #e9ecef;
+            border-left: 4px solid #007bff;
+        }
+        .assistant {
+            background-color: #f1f8ff;
+            border-left: 4px solid #28a745;
+        }
+        .message-header {
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .message-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="m-b-md">
+                    <h2>对话详情</h2>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <dl class="dl-horizontal">
+                            <dt>会话ID：</dt>
+                            <dd th:text="${chatList[0].conversationId}"></dd>
+                            <dt>用户ID：</dt>
+                            <dd th:text="${userId}"></dd>
+                        </dl>
+                    </div>
+                    <div class="col-sm-6">
+                        <dl class="dl-horizontal">
+                            <dt>开始时间：</dt>
+                            <dd th:text="${#dates.format(createTime, 'yyyy-MM-dd HH:mm:ss')}"></dd>
+                            <dt>消息数量：</dt>
+                            <dd th:text="${#lists.size(chatList)}"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row m-t-sm">
+            <div class="col-sm-12">
+                <div class="panel blank-panel">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">对话内容</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chat-messages">
+                            <div th:each="chat : ${chatList}" th:class="'chat-message ' + ${chat.role}">
+                                <div class="message-header">
+                                    <span th:text="${chat.role == 'system' ? '系统' : (chat.role == 'user' ? '用户' : 'AI助手')}"></span>
+                                    <span class="pull-right" th:text="${#dates.format(chat.createTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+                                </div>
+                                <div class="message-content" th:text="${chat.content}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+</body>
+</html>

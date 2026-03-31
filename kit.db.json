@@ -1,0 +1,13 @@
+[
+	{
+		"id":"DYAAMK98240SC",
+		"name":"jy_study",
+		"type":"mysql",
+		"host":"119.91.203.72",
+		"port":"3306",
+		"schema":"jy_study",
+		"username":"jy_study",
+		"password":"ZSjYws2zk2DZ66GW",
+		"models":[]
+	}
+]

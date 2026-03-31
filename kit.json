@@ -1,0 +1,37 @@
+{
+	"name":"我的项目-ruoyi",
+	"space":"RuoYi",
+	"service":{
+		"ruoyi":{
+			"version":"4.7.9",
+			"variables":[
+				{
+					"name":"basePackage",
+					"inputType":"input",
+					"value":"com.jy.study"
+				},
+				{
+					"name":"basePackagePath",
+					"inputType":"input",
+					"value":"${basePackage?replace('.', '/')}"
+				},
+				{
+					"name":"projectName",
+					"inputType":"input",
+					"value":"jy-study"
+				},
+				{
+					"name":"database",
+					"inputType":"datasource",
+					"value":"DYAAMK98240SC"
+				},
+				{
+					"name":"_plugins",
+					"inputType":"_plugins",
+					"value":[]
+				}
+			]
+		}
+	},
+	"plugins":{}
+}

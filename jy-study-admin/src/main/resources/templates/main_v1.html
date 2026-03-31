@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计</title>
+    <link href="css/bootstrap.min.css" th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link href="css/font-awesome.min.css" th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link href="css/animate.min.css" th:href="@{/css/animate.min.css}" rel="stylesheet"/>
+    <link href="css/style.min.css" th:href="@{/css/style.min.css}" rel="stylesheet"/>
+</head>
+
+<body class="gray-bg">
+    <div class="wrapper wrapper-content">
+        <!-- 顶部统计卡片 -->
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-success pull-right">总计</span>
+                        <h5>用户总数</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="totalUsers">0</h1>
+                        <small>当前注册用户总数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-info pull-right">今日</span>
+                        <h5>活跃用户</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="todayActiveUsers">0</h1>
+                        <small>今日登录用户数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-primary pull-right">本月</span>
+                        <h5>新增用户</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="monthNewUsers">0</h1>
+                        <small>本月新注册用户</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-primary pull-right">本月</span>
+                        <h5>ai使用人数</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="monthAIusers">3</h1>
+                        <small>本月ai使用人数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二行统计卡片 -->
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-success pull-right">总计</span>
+                        <h5>课程总数</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="totalLessons">0</h1>
+                        <small>当前课程总数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-info pull-right">总计</span>
+                        <h5>文章总数</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="totalArticles">0</h1>
+                        <small>当前文章总数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-primary pull-right">本月</span>
+                        <h5>新增课程</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="monthNewLessons">0</h1>
+                        <small>本月新增课程数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <span class="label label-primary pull-right">本月</span>
+                        <h5>新增文章</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <h1 class="no-margins" id="monthNewArticles">0</h1>
+                        <small>本月新增文章数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>内容增长趋势</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="chart-container">
+                            <div id="contentTrendChart" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>分类统计</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="pie-chart">
+                                    <div id="lessonCategoryChart" style="width: 100%; height: 100%;"></div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="pie-chart">
+                                    <div id="articleCategoryChart" style="width: 100%; height: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排行榜区域 -->
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>热门课程Top10</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <div id="topLessonsList"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>热门文章Top10</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <div id="topArticlesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 活跃用户展示区域 -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>7天内活跃用户</h5>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>浏览文章</th>
+                                        <th>浏览课程</th>
+                                        <th>点赞文章</th>
+                                        <th>点赞课程</th>
+                                        <th>收藏文章</th>
+                                        <th>收藏课程</th>
+                                        <th>总活跃度</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeUsersList">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/jquery.min.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/echarts.min.js}"></script>
+    <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>
+
+    <script th:inline="javascript">
+        $(function() {
+            loadTopData();
+            loadContentTrend();
+            loadCategoryStats();
+            loadTopLists();
+            loadActiveUsers();
+            
+            // 定时刷新数据
+            setInterval(function() {
+                loadTopData();
+                loadActiveUsers();
+            }, 6000000);
+        });
+
+        function loadTopData() {
+            $.get(ctx + "system/stat/topData", function(res) {
+                if (res.code == 0) {
+                    var data = res.data;
+                    $("#totalUsers").text(data.totalUsers);
+                    $("#todayActiveUsers").text(data.todayActiveUsers);
+                    $("#monthNewUsers").text(data.monthNewUsers);
+                    $("#totalLessons").text(data.totalLessons);
+                    $("#totalArticles").text(data.totalArticles);
+                    $("#monthNewLessons").text(data.monthNewLessons);
+                    $("#monthNewArticles").text(data.monthNewArticles);
+                }
+            });
+        }
+
+        function loadContentTrend() {
+            var contentTrendChart = echarts.init(document.getElementById('contentTrendChart'));
+            
+            $.get(ctx + "system/stat/contentTrend", function(res) {
+                if (res.code == 0) {
+                    var data = res.data;
+                    var dates = [];
+                    var lessonData = [];
+                    var articleData = [];
+                    
+                    // 处理课程趋势数据
+                    data.lessonTrend.forEach(function(item) {
+                        dates.push(item.month);
+                        lessonData.push(item.count);
+                    });
+                    
+                    // 处理文章趋势数据  
+                    data.articleTrend.forEach(function(item) {
+                        articleData.push(item.count);
+                    });
+
+                    var option = {
+                        title: {
+                            text: '内容增长趋势'
+                        },
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data: ['课程', '文章']
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%', 
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: dates
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [{
+                            name: '课程',
+                            type: 'line',
+                            data: lessonData,
+                            itemStyle: {
+                                normal: {
+                                    color: '#36a2ef',
+                                    lineStyle: {
+                                        color: '#36a2ef'
+                                    }
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(54,162,239,0.3)'
+                                    }, {
+                                        offset: 1,
+                                        color: 'rgba(54,162,239,0.1)'
+                                    }])
+                                }
+                            }
+                        }, {
+                            name: '文章',
+                            type: 'line',
+                            data: articleData,
+                            itemStyle: {
+                                normal: {
+                                    color: '#63daab',
+                                    lineStyle: {
+                                        color: '#63daab'
+                                    }
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(99,218,171,0.3)'
+                                    }, {
+                                        offset: 1,
+                                        color: 'rgba(99,218,171,0.1)'
+                                    }])
+                                }
+                            }
+                        }]
+                    };
+                    contentTrendChart.setOption(option);
+                }
+            });
+        }
+
+        function loadCategoryStats() {
+            var lessonChart = echarts.init(document.getElementById('lessonCategoryChart'));
+            var articleChart = echarts.init(document.getElementById('articleCategoryChart'));
+            
+            $.get(ctx + "system/stat/categoryStats", function(res) {
+                if (res.code == 0) {
+                    var data = res.data;
+                    
+                    // 定义清新的颜色方案
+                    var colors = [
+                        '#36a2ef',  // 蓝色
+                        '#63daab', // 绿色
+                        '#ffd666', // 黄色
+                        '#ff85c0', // 粉色
+                        '#9d96ff', // 紫色
+                        '#ff9f7f'  // 橙色
+                    ];
+                    
+                    // 课程分类图表配置
+                    var lessonOption = {
+                        color: colors,
+                        title: {
+                            text: '课程分类占比',
+                            left: 'center',
+                            top: 10
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'horizontal',
+                            bottom: 10,
+                            itemWidth: 10,
+                            itemHeight: 10,
+                            textStyle: {
+                                fontSize: 12
+                            }
+                        },
+                        series: [{
+                            name: '课程分类',
+                            type: 'pie',
+                            radius: ['45%', '60%'],
+                            center: ['50%', '50%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: {
+                                show: true,
+                                position: 'outside',
+                                formatter: '{b}: {d}%',
+                                fontSize: 12,
+                                color: '#666'
+                            },
+                            labelLine: {
+                                show: true,
+                                length: 12,
+                                length2: 5
+                            },
+                            data: data.lessonCategories
+                        }]
+                    };
+                    
+                    // 文章分类图表配置
+                    var articleOption = {
+                        color: colors,
+                        title: {
+                            text: '文章分类占比',
+                            left: 'center',
+                            top: 10
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'horizontal',
+                            bottom: 10,
+                            itemWidth: 10,
+                            itemHeight: 10,
+                            textStyle: {
+                                fontSize: 12
+                            }
+                        },
+                        series: [{
+                            name: '文章分类',
+                            type: 'pie',
+                            radius: ['45%', '60%'],
+                            center: ['50%', '50%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: {
+                                show: true,
+                                position: 'outside',
+                                formatter: '{b}: {d}%',
+                                fontSize: 12,
+                                color: '#666'
+                            },
+                            labelLine: {
+                                show: true,
+                                length: 12,
+                                length2: 5
+                            },
+                            data: data.articleCategories
+                        }]
+                    };
+                    
+                    lessonChart.setOption(lessonOption);
+                    articleChart.setOption(articleOption);
+                    
+                    // 添加窗口大小改变时的自适应
+                    window.addEventListener('resize', function() {
+                        lessonChart.resize();
+                        articleChart.resize();
+                    });
+                }
+            });
+        }
+
+        function loadTopLists() {
+            $.get(ctx + "system/stat/topList", function(res) {
+                if (res.code == 0) {
+                    var data = res.data;
+                    
+                    // 渲染课程排行榜
+                    var lessonHtml = '<div class="list-group">';
+                    data.topLessons.forEach(function(item, index) {
+                        lessonHtml += '<a href="javascript:void(0)" class="list-group-item">' + 
+                            '<div class="badges">' +
+                            '<span class="badge bg-primary">' + (index + 1) + '</span>' +
+                            '</div>' +
+                            '<div class="title">' + item.title + '</div>' +
+                            '<div class="badges">' +
+                            '<span class="badge bg-info"><i class="fa fa-eye"></i> ' + item.viewCount + '</span>' +
+                            '</div></a>';
+                    });
+                    lessonHtml += '</div>';
+                    $("#topLessonsList").html(lessonHtml);
+                    
+                    // 渲染文章排行榜
+                    var articleHtml = '<div class="list-group">';
+                    data.topArticles.forEach(function(item, index) {
+                        articleHtml += '<a href="javascript:void(0)" class="list-group-item">' + 
+                            '<div class="badges">' +
+                            '<span class="badge bg-primary">' + (index + 1) + '</span>' +
+                            '</div>' +
+                            '<div class="title">' + item.title + '</div>' +
+                            '<div class="badges">' +
+                            '<span class="badge bg-info"><i class="fa fa-eye"></i> ' + item.viewCount + '</span>' +
+                            '</div></a>';
+                    });
+                    articleHtml += '</div>';
+                    $("#topArticlesList").html(articleHtml);
+                }
+            });
+        }
+
+        function loadActiveUsers() {
+            $.get(ctx + "system/stat/activeUsersList", function(res) {
+                if (res.code == 0) {
+                    var html = '';
+                    res.data.forEach(function(user) {
+                        html += '<tr>' +
+                            '<td><strong>' + user.userName + '</strong></td>' +
+                            '<td><span class="badge bg-primary">' + user.articleViewCount + '</span></td>' +
+                            '<td><span class="badge bg-info">' + user.lessonViewCount + '</span></td>' +
+                            '<td><span class="badge bg-success">' + user.articleLikeCount + '</span></td>' +
+                            '<td><span class="badge bg-warning">' + user.lessonLikeCount + '</span></td>' +
+                            '<td><span class="badge bg-danger">' + user.articleCollectCount + '</span></td>' +
+                            '<td><span class="badge bg-purple">' + user.lessonCollectCount + '</span></td>' +
+                            '<td><span class="badge bg-primary">' + user.totalActions + '</span></td>' +
+                            '</tr>';
+                    });
+                    $("#activeUsersList").html(html);
+                }
+            });
+        }
+    </script>
+
+    <!-- 添加一些样式美化 -->
+    <style>
+        .table > thead > tr > th {
+            background-color: #f5f5f6;
+            border-bottom: 1px solid #e7eaec;
+        }
+        .table > tbody > tr:hover {
+            background-color: #f5f5f5;
+        }
+        .badge-primary {
+            background-color: #1ab394;
+            color: #FFFFFF;
+        }
+        .table > tbody > tr > td {
+            vertical-align: middle;
+        }
+        .badge {
+            margin-left: 5px;
+        }
+        .badge.bg-primary {
+            background-color: #1890ff;
+        }
+        .table > tbody > tr > td {
+            padding: 12px 8px;
+            vertical-align: middle;
+        }
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 10px 15px;
+        }
+        .list-group-item:first-child {
+            border-top: none;
+        }
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ibox {
+            height: 100%;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+        .pie-chart {
+            height: 400px;
+            width: 100%;
+        }
+        .label-success {
+            background-color: #52c41a;
+            opacity: 0.8;
+        }
+        .label-info {
+            background-color: #36a2ef;
+            opacity: 0.8;
+        }
+        .label-primary {
+            background-color: #1890ff;
+            opacity: 0.8;
+        }
+        .badge.bg-info {
+            background-color: #36a2ef;
+            color: #fff;
+            padding: 4px 8px;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+        .badge.bg-primary {
+            background-color: #1890ff;
+            color: #fff;
+            padding: 4px 8px;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+        }
+        .list-group-item .title {
+            flex: 1;
+            margin-left: 10px;
+            margin-right: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .list-group-item .badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* 修改活跃用户表格的徽章样式 */
+        .table .badge {
+            padding: 4px 8px;
+            font-weight: normal;
+            opacity: 0.75;  /* 降低透明度 */
+            color: #fff;    /* 确保文字为白色 */
+            text-shadow: 0 0 1px rgba(0,0,0,0.2); /* 添加轻微文字阴影提高可读性 */
+        }
+
+        .table .badge.bg-primary {
+            background-color: #1890ff;
+        }
+
+        .table .badge.bg-info {
+            background-color: #36a2ef;
+        }
+
+        .table .badge.bg-success {
+            background-color: #52c41a;
+        }
+
+        .table .badge.bg-warning {
+            background-color: #faad14;
+        }
+
+        .table .badge.bg-danger {
+            background-color: #ff4d4f;
+        }
+
+        .table .badge.bg-purple {
+            background-color: #722ed1;
+        }
+
+        /* 调整表格样式 */
+        .table > tbody > tr > td {
+            padding: 12px 8px;
+            vertical-align: middle;
+        }
+
+        /* 鼠标悬停效果 */
+        .table > tbody > tr:hover .badge {
+            opacity: 0.9; /* 悬停时提高透明度 */
+        }
+
+        /* 调整列间距 */
+        .row {
+            margin-left: -10px;  /* 原来是 -15px */
+            margin-right: -10px; /* 原来是 -15px */
+        }
+
+        .col-sm-3, .col-sm-6, .col-sm-12 {
+            padding-left: 10px;  /* 原来是 15px */
+            padding-right: 10px; /* 原来是 15px */
+        }
+    </style>
+</body>
+</html>

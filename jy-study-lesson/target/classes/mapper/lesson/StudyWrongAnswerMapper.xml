@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyWrongAnswerMapper">
+    
+    <resultMap type="StudyWrongAnswer" id="StudyWrongAnswerResult">
+        <result property="id"    column="id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="exerciseId"    column="exercise_id"    />
+        <result property="wrongCount"    column="wrong_count"    />
+        <result property="lastWrongTime"    column="last_wrong_time"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectStudyWrongAnswerVo">
+        select id, user_id, exercise_id, wrong_count, last_wrong_time, create_time from study_wrong_answer
+    </sql>
+
+    <select id="selectStudyWrongAnswerList" parameterType="StudyWrongAnswer" resultMap="StudyWrongAnswerResult">
+        <include refid="selectStudyWrongAnswerVo"/>
+        <where>
+            <if test="userId != null "> and user_id = #{userId}</if>
+        </where>
+    </select>
+
+    <select id="selectStudyWrongAnswerByUserIdAndExerciseId" resultMap="StudyWrongAnswerResult">
+        <include refid="selectStudyWrongAnswerVo"/>
+        where user_id = #{userId} and exercise_id = #{exerciseId}
+    </select>
+    
+    <insert id="insertStudyWrongAnswer" parameterType="StudyWrongAnswer" useGeneratedKeys="true" keyProperty="id">
+        insert into study_wrong_answer
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="exerciseId != null">exercise_id,</if>
+            <if test="wrongCount != null">wrong_count,</if>
+            <if test="lastWrongTime != null">last_wrong_time,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="exerciseId != null">#{exerciseId},</if>
+            <if test="wrongCount != null">#{wrongCount},</if>
+            <if test="lastWrongTime != null">#{lastWrongTime},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateStudyWrongAnswer" parameterType="StudyWrongAnswer">
+        update study_wrong_answer
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="wrongCount != null">wrong_count = #{wrongCount},</if>
+            <if test="lastWrongTime != null">last_wrong_time = #{lastWrongTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteStudyWrongAnswerByIds">
+        delete from study_wrong_answer
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="purgeInvalidWrongAnswers">
+        delete from study_wrong_answer wa
+        where wa.exercise_id is null
+           or (wa.exercise_id &gt; 0 and not exists (
+                select 1 from study_exercise e where e.id = wa.exercise_id
+           ))
+           or (wa.exercise_id &lt; 0 and not exists (
+                select 1 from study_lesson_exercise le where le.exercise_id = -wa.exercise_id
+           ))
+    </delete>
+
+</mapper>

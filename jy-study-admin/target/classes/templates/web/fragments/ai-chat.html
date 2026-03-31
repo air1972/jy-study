@@ -1,0 +1,559 @@
+<!-- AI助手组件 -->
+
+<div th:fragment="ai-chat">
+    <!-- 悬浮按钮 -->
+    <div id="ai-chat-button" class="ai-chat-button">
+        <i class="fa fa-comments"></i>
+    </div>
+
+    <!-- 聊天窗口 -->
+    <div id="ai-chat-window" class="ai-chat-window">
+        <div class="chat-header">
+            <span>AI助手</span>
+            <button class="close-btn"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- 消息将在这里动态添加 -->
+            <div class="message assistant">
+                <div class="message-content">
+                    你好！我是你的AI学习助手，有什么我可以帮你的吗？
+                </div>
+            </div>
+        </div>
+        <div class="chat-input">
+            <textarea id="chat-input-text" placeholder="输入你的问题..."></textarea>
+            <button id="send-message"><i class="fa fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <style>
+        .ai-chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: #2196F3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            color: white;
+            font-size: 24px;
+        }
+
+        .ai-chat-window {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 450px;
+            height: 600px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #2196F3;
+            color: white;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-items: flex-start;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .user .message-content {
+            background: #2196F3;
+            color: white;
+        }
+
+        .assistant .message-content {
+            background: #f1f1f1;
+            color: #333;
+        }
+
+        .chat-input {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            resize: none;
+            height: 40px;
+            font-size: 14px;
+        }
+
+        .chat-input button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #2196F3;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-input button:hover {
+            background: #1976D2;
+        }
+
+        /* 添加流式输出和markdown渲染相关样式 */
+        .message-content.analyzing {
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .message-content.markdown {
+            line-height: 1.6;
+        }
+        
+        .message-content.markdown h1,
+        .message-content.markdown h2,
+        .message-content.markdown h3 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        
+        .message-content.markdown ul,
+        .message-content.markdown ol {
+            padding-left: 20px;
+        }
+        
+        .message-content.markdown code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .message-content.markdown pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        .message-content.markdown blockquote {
+            border-left: 4px solid #e9ecef;
+            padding-left: 15px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* 增强 markdown 样式 */
+        .message-content.markdown {
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .message-content.markdown h1,
+        .message-content.markdown h2,
+        .message-content.markdown h3 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        .message-content.markdown h1 { font-size: 1.5em; }
+        .message-content.markdown h2 { font-size: 1.3em; }
+        .message-content.markdown h3 { font-size: 1.1em; }
+        
+        .message-content.markdown ul,
+        .message-content.markdown ol {
+            padding-left: 1.5em;
+            margin: 0.5em 0;
+        }
+        
+        .message-content.markdown li {
+            margin: 0.3em 0;
+        }
+        
+        .message-content.markdown code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+            font-size: 85%;
+        }
+        
+        .message-content.markdown pre {
+            background: #f6f8fa;
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 0.5em 0;
+        }
+        
+        .message-content.markdown pre code {
+            background: none;
+            padding: 0;
+            font-size: 90%;
+            color: #24292e;
+        }
+        
+        .message-content.markdown blockquote {
+            margin: 0.5em 0;
+            padding: 0.5em 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            background: #f6f8fa;
+        }
+        
+        .message-content.markdown p {
+            margin: 0.5em 0;
+        }
+        
+        .message-content.markdown hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+        
+        .message-content.markdown table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            margin: 1em 0;
+            width: 100%;
+        }
+        
+        .message-content.markdown table th,
+        .message-content.markdown table td {
+            padding: 6px 13px;
+            border: 1px solid #dfe2e5;
+        }
+        
+        .message-content.markdown table th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+    </style>
+    <script th:src="@{/ajax/libs/layer/layer.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:inline="javascript"> var ctx = [[@{/}]]; var lockscreen = [[${session.lockscreen}]]; if(lockscreen){window.top.location=ctx+"lockscreen";} </script>
+    <script th:inline="javascript">   window.isAuthenticated = [[${@shiroService.getPrincipal() != null}]]; </script>
+
+    <script>
+        $(function() {
+            const chatButton = $('#ai-chat-button');
+            const chatWindow = $('#ai-chat-window');
+            const closeBtn = $('.close-btn');
+            const sendBtn = $('#send-message');
+            const inputText = $('#chat-input-text');
+            const messagesContainer = $('#chat-messages');
+            let conversationId = null;
+            
+            // 获取当前页面的文章ID
+            const articleId = $('meta[name="article-id"]').attr('content');
+            
+            // 显示/隐藏聊天窗口
+            chatButton.click(function() {
+                chatWindow.css('display', 'flex');
+                chatButton.hide();
+            });
+
+            closeBtn.click(function() {
+                chatWindow.hide();
+                chatButton.show();
+            });
+
+            // 发送消息
+            function sendMessage() {
+                if(handleLoginRequired()) {
+                    return;
+                }
+                const message = inputText.val().trim();
+                if (!message) return;
+
+                appendMessage('user', message);
+                inputText.val('');
+
+                const messageElement = appendMessage('assistant', '');
+                const contentElement = messageElement.find('.message-content');
+                
+                // 根据是否在文章页面选择不同的接口
+                const apiUrl = articleId ? 
+                    (ctx + 'llm/article/chat/' + articleId) : 
+                    (ctx + 'llm/chat/stream');
+                    
+                const source = new EventSource(apiUrl + '?' + 
+                    'message=' + encodeURIComponent(message) + 
+                    '&conversationId=' + (conversationId || ''));
+
+                let content = '';
+                let cacheId = null;
+                
+                source.onmessage = function(event) {
+                    // 检查是否是缓存ID事件
+                    if(event.data.startsWith('event: cache-id')) {
+                        const cacheId = event.data.split('\n')[1].replace('data: ', '');
+                        // 获取转换后的HTML
+                        $.ajax({
+                            url: ctx + 'llm/markdownToHtml2',
+                            type: 'GET',
+                            data: {
+                                id: cacheId
+                            },
+                            success: function(html) {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(html);
+                                
+                                // 滚动到底部
+                                messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                                
+                                if(callback) callback();
+                            },
+                            error: function() {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(content);
+                                
+                                if(callback) callback();
+                            }
+                        });
+                    } else {
+                        content += event.data;
+                        // 显示实时内容
+                        contentElement.addClass('analyzing').text(content);
+                        // 滚动到底部
+                        messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                    }
+                };
+
+                source.onerror = function(event) {
+                    source.close();
+                    contentElement
+                        .removeClass('analyzing')
+                        .addClass('markdown')
+                        .html(content);
+                    if(callback) callback();
+                };
+            }
+
+            // 添加消息到界面
+            function appendMessage(role, content) {
+                const messageHtml = `
+                    <div class="message ${role}">
+                        <div class="message-content">${content}</div>
+                    </div>
+                `;
+                const messageElement = $(messageHtml);
+                messagesContainer.append(messageElement);
+                messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                return messageElement;
+            }
+
+            // 发送按钮点击事件
+            sendBtn.click(sendMessage);
+
+            // 输入框回车发送
+            inputText.keypress(function(e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // 定义全局函数
+            window.triggerArticleAnalysis = function(articleId, callback) {
+                // 打开聊天窗口
+                chatWindow.css('display', 'flex');
+                chatButton.hide();
+                
+                // 添加用户消息到界面
+                appendMessage('user', '请帮我分析这篇文章的主要内容、写作特点和核心观点，并给出你的评价。');
+                
+                // 创建新的消息元素用于显示AI回复
+                const messageElement = appendMessage('assistant', '');
+                const contentElement = messageElement.find('.message-content');
+                
+                // 使用article/chat接口
+                const source = new EventSource(ctx + 'llm/article/chat/' + articleId + '?' +
+                    'message=' + encodeURIComponent('请帮我分析这篇文章的主要内容、写作特点和核心观点，并给出你的评价。') +
+                    '&conversationId=' + (conversationId || ''));
+                
+                let content = '';
+                let cacheId = null;
+                
+                source.onmessage = function(event) {
+                    // 检查是否是缓存ID事件
+                    if(event.data.startsWith('event: cache-id')) {
+                        const cacheId = event.data.split('\n')[1].replace('data: ', '');
+                        // 获取转换后的HTML
+                        $.ajax({
+                            url: ctx + 'llm/markdownToHtml2',
+                            type: 'GET',
+                            data: {
+                                id: cacheId
+                            },
+                            success: function(html) {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(html);
+                                
+                                // 滚动到底部
+                                messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                                
+                                if(callback) callback();
+                            },
+                            error: function() {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(content);
+                                
+                                if(callback) callback();
+                            }
+                        });
+                    } else {
+                        content += event.data;
+                        // 显示实时内容
+                        contentElement.addClass('analyzing').text(content);
+                        // 滚动到底部
+                        messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                    }
+                };
+                
+                source.onerror = function(event) {
+                    source.close();
+                    contentElement
+                        .removeClass('analyzing')
+                        .addClass('markdown')
+                        .html(content);
+                    if(callback) callback();
+                };
+            };
+
+            // 定义课程分析函数
+            window.triggerLessonAnalysis = function(lessonId, callback) {
+                // 打开聊天窗口
+                chatWindow.css('display', 'flex');
+                chatButton.hide();
+                
+                // 添加用户消息到界面
+                appendMessage('user', '请帮我分析这个视频的主要内容、知识点和核心观点，并给出你的评价。');
+                
+                // 创建新的消息元素用于显示AI回复
+                const messageElement = appendMessage('assistant', '');
+                const contentElement = messageElement.find('.message-content');
+                
+                // 使用lesson/chat接口
+                const source = new EventSource(ctx + 'llm/lesson/chat/' + lessonId + '?' +
+                    'message=' + encodeURIComponent('请帮我分析这个视频的主要内容、知识点和核心观点，并给出你的评价。') +
+                    '&conversationId=' + (conversationId || ''));
+                
+                let content = '';
+                let cacheId = null;
+                
+                source.onmessage = function(event) {
+                    // 检查是否是缓存ID事件
+                    if(event.data.startsWith('event: cache-id')) {
+                        const cacheId = event.data.split('\n')[1].replace('data: ', '');
+                        // 获取转换后的HTML
+                        $.ajax({
+                            url: ctx + 'llm/markdownToHtml2',
+                            type: 'GET',
+                            data: {
+                                id: cacheId
+                            },
+                            success: function(html) {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(html);
+                                
+                                // 滚动到底部
+                                messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                                
+                                if(callback) callback();
+                            },
+                            error: function() {
+                                contentElement
+                                    .removeClass('analyzing')
+                                    .addClass('markdown')
+                                    .html(content);
+                                
+                                if(callback) callback();
+                            }
+                        });
+                    } else {
+                        content += event.data;
+                        // 显示实时内容
+                        contentElement.addClass('analyzing').text(content);
+                        // 滚动到底部
+                        messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+                    }
+                };
+                
+                source.onerror = function(event) {
+                    source.close();
+                    contentElement
+                        .removeClass('analyzing')
+                        .addClass('markdown')
+                        .html(content);
+                    if(callback) callback();
+                };
+            };
+        });
+    </script>
+</div>

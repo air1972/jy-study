@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 课程学习平台</title>
+    <!-- 引入基础样式 -->
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link th:href="@{/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/ruoyi/css/ry-ui.css}" rel="stylesheet"/>
+    <link th:href="@{/css/web-common.css}" rel="stylesheet"/>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.08);
+        }
+
+        .profile-container {
+            padding: 40px 0;
+            min-height: calc(100vh - 56px - 116px); /* 减去导航栏和页脚的高度 */
+        }
+
+        .profile-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #eef1f5;
+        }
+
+        .profile-hero {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            border-radius: 10px;
+            background: linear-gradient(120deg, #eef3ff 0%, #f7fbff 100%);
+            border: 1px solid #e4ebff;
+            margin-bottom: 20px;
+        }
+
+        .profile-hero-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(91, 115, 232, 0.25);
+        }
+
+        .profile-hero-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3a4f;
+            line-height: 1.1;
+        }
+
+        .profile-hero-meta {
+            font-size: 13px;
+            color: #6d7a8a;
+            margin-top: 4px;
+        }
+
+        .nav-tabs {
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 30px;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #495057;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #5b73e8;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #5b73e8;
+            background: none;
+            border-bottom: 2px solid #5b73e8;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            padding: 8px 12px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #5b73e8;
+            box-shadow: 0 0 0 0.2rem rgba(91, 115, 232, 0.25);
+        }
+
+        .btn-save {
+            padding: 10px 30px;
+            border-radius: 25px;
+            transition: all .3s ease;
+            border: 2px solid #5b73e8;
+            background: #5b73e8;
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn-save:hover {
+            background: #4559c9;
+            border-color: #4559c9;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(91, 115, 232, 0.2);
+        }
+
+        .custom-radio .custom-control-input:checked ~ .custom-control-label::before {
+            background-color: #5b73e8;
+            border-color: #5b73e8;
+        }
+
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 40px 0;
+        }
+
+        /* 快捷入口卡片 */
+        .shortcut-card {
+            margin-top: 40px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            padding: 20px;
+        }
+
+        .shortcut-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .shortcut-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .shortcut-item:hover {
+            background: #eef2ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(91, 115, 232, 0.1);
+        }
+
+        .shortcut-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #5b73e8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+
+        .shortcut-content {
+            flex: 1;
+        }
+
+        .shortcut-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .shortcut-desc {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .suggestion-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            color: #495057;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .avatar-container {
+            text-align: center;
+        }
+
+        .avatar-container img {
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,.1);
+            transition: all .3s ease;
+        }
+
+        .avatar-container img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,.2);
+        }
+
+        .learning-path-box .badge-pill {
+            padding: 6px 10px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .path-step-item {
+            border-left: 3px solid #5b73e8;
+            background: #f8faff;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        .path-step-title {
+            color: #2d3a4f;
+            font-weight: 600;
+        }
+
+        .path-step-reason {
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 24px 0;
+            }
+
+            .profile-card, .shortcut-card {
+                padding: 16px;
+            }
+
+            .shortcut-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 修改JS依赖的加载顺序 -->
+<!-- 1. 首先加载 jQuery -->
+<script th:src="@{/js/jquery.min.js}"></script>
+
+<!-- 2. 加载 Popper.js (Bootstrap 4 需要) -->
+<script th:src="@{/js/popper.min.js}"></script>
+
+<!-- 3. 然后加载 Bootstrap 的 JS -->
+<script th:src="@{/js/bootstrap.min.js}"></script>
+
+<!-- 4. 其他依赖 -->
+<script th:src="@{/ajax/libs/layer/layer.min.js}"></script>
+<script th:src="@{/ruoyi/js/common.js}"></script>
+<script th:src="@{/ruoyi/js/ry-ui.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+
+<!-- 定义ctx变量 -->
+<script th:inline="javascript">
+    var ctx = /*[[@{/}]]*/'';
+    var prefix = ctx + "web/user/profile";
+</script>
+
+<!-- 引入导航栏 -->
+<div th:replace="web/fragments/navbar :: navbar"></div>
+
+<!-- 个人中心内容 -->
+<div class="container profile-container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="profile-card">
+                <div class="profile-hero">
+                    <img class="profile-hero-avatar" th:src="${user.avatar}" onerror="this.src='/img/profile.jpg'">
+                    <div>
+                        <div class="profile-hero-name" th:text="${user.userName}">用户</div>
+                        <div class="profile-hero-meta" th:text="'账号：' + ${user.loginName}">账号：</div>
+                    </div>
+                </div>
+
+                <!-- Tab导航 -->
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">基本资料</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab" aria-controls="security" aria-selected="false">安全设置</a>
+                    </li>
+                </ul>
+
+                <!-- Tab内容 -->
+                <div class="tab-content mt-4" id="profileTabContent">
+                    <!-- 基本资料 -->
+                    <div class="tab-pane" id="basic" role="tabpanel" aria-labelledby="basic-tab" style="display: block;">
+                        <form id="userInfoForm">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">用户名称</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" name="userName"
+                                           th:value="${user.userName}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">手机号码</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" name="phonenumber"
+                                           th:value="${user.phonenumber}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">邮箱</label>
+                                <div class="col-sm-9">
+                                    <input type="email" class="form-control" name="email"
+                                           th:value="${user.email}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">性别</label>
+                                <div class="col-sm-9">
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" id="male" name="sex" value="0"
+                                               class="custom-control-input" th:checked="${user.sex == '0'}">
+                                        <label class="custom-control-label" for="male">男</label>
+                                    </div>
+                                    <div class="custom-control custom-radio custom-control-inline">
+                                        <input type="radio" id="female" name="sex" value="1"
+                                               class="custom-control-input" th:checked="${user.sex == '1'}">
+                                        <label class="custom-control-label" for="female">女</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">头像</label>
+                                <div class="col-sm-9">
+                                    <div class="avatar-container">
+                                        <img id="avatarImage" th:src="${user.avatar}" 
+                                             onerror="this.src='/img/profile.jpg'" 
+                                             class="rounded-circle user-avatar" 
+                                             style="width: 100px; height: 100px; object-fit: cover;">
+                                        <div class="mt-2">
+                                            <input type="file" id="avatarFile" style="display: none;" 
+                                                   accept="image/jpeg,image/png,image/gif">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                    onclick="$('#avatarFile').click()">
+                                                更换头像
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-9 offset-sm-3">
+                                    <button type="button" class="btn btn-save" onclick="submitUserInfo()">
+                                        保存修改
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 修改密码 -->
+                    <div class="tab-pane" id="security" role="tabpanel" aria-labelledby="security-tab" style="display: none;">
+                        <form id="passwordForm">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">原密码</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" name="oldPassword">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">新密码</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" name="newPassword">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">确认密码</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" name="confirmPassword">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-9 offset-sm-3">
+                                    <button type="button" class="btn btn-save" onclick="submitPassword()">
+                                        修改密码
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷入口卡片 -->
+            <div class="shortcut-card">
+                <h3>我的学习</h3>
+                <div class="shortcut-grid">
+                    <a th:href="@{/web/user/history}" class="shortcut-item">
+                        <div class="shortcut-icon">
+                            <i class="fa fa-history"></i>
+                        </div>
+                        <div class="shortcut-content">
+                            <div class="shortcut-title">浏览记录</div>
+                            <div class="shortcut-desc">查看最近浏览过的课程和文章</div>
+                        </div>
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                    <a th:href="@{/web/user/collection}" class="shortcut-item">
+                        <div class="shortcut-icon" style="background-color: #f1935c;">
+                            <i class="fa fa-star"></i>
+                        </div>
+                        <div class="shortcut-content">
+                            <div class="shortcut-title">我的收藏</div>
+                            <div class="shortcut-desc">查看收藏的课程和文章</div>
+                        </div>
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                    <a th:href="@{/web/user/like}" class="shortcut-item">
+                        <div class="shortcut-icon" style="background-color: #f07cb0;">
+                            <i class="fa fa-heart"></i>
+                        </div>
+                        <div class="shortcut-content">
+                            <div class="shortcut-title">我的点赞</div>
+                            <div class="shortcut-desc">查看点赞的课程和文章</div>
+                        </div>
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="shortcut-card learning-path-box">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 style="margin-bottom: 0;">个性化学习路线</h3>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadPersonalizedLearningPath()">刷新</button>
+                </div>
+                <div id="personalizedLearningPath" class="mt-3 text-muted">加载中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer bg-dark text-white py-4">
+    <div class="container text-center">
+        <p>© 2024 课程学习平台. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- 修改初始化脚本 -->
+<script>
+    $(function() {
+        // 处理标签页切换
+        $('#profileTabs a').on('click', function (e) {
+            e.preventDefault();
+
+            // 移除所有标签的 active 类
+            $('#profileTabs a').removeClass('active');
+            // 添加当前标签的 active 类
+            $(this).addClass('active');
+
+            // 获取目标面板
+            var target = $(this).attr('href');
+
+            // 隐藏所有面板
+            $('.tab-pane').hide();
+            // 显示目标面板
+            $(target).show();
+
+            // 更新 URL（可选）
+            history.pushState(null, null, $(this).attr('href'));
+        });
+
+        // 处理页面加载时的 URL hash
+        var hash = window.location.hash;
+        if (hash) {
+            $('#profileTabs a[href="' + hash + '"]').click();
+        }
+        loadPersonalizedLearningPath();
+    });
+
+    function loadPersonalizedLearningPath() {
+        $("#personalizedLearningPath").text("加载中...");
+        $.get(prefix + "/learning-path", function(res) {
+            if (res.code != 0) {
+                $("#personalizedLearningPath").text(res.msg || "加载失败");
+                return;
+            }
+            var data = res.data || {};
+            var analysis = data.analysis || {};
+            var path = data.path || {};
+            var weakPoints = analysis.weakPoints || [];
+            var steps = (path.pathSteps || []).slice(0, 5);
+
+            var html = '';
+            html += '<div class="suggestion-item">';
+            html += '<div class="suggestion-title">学习画像</div>';
+            html += '<span class="badge badge-primary badge-pill">学习水平：' + (analysis.learningLevel || '-') + '</span>';
+            html += '<span class="badge badge-success badge-pill">正确率：' + formatPercent(analysis.accuracy) + '</span>';
+            html += '<span class="badge badge-info badge-pill">总练习：' + (analysis.totalExercises || 0) + '</span>';
+            html += '<span class="badge badge-warning badge-pill">预计完成：' + (path.estimatedDays || 14) + '天</span>';
+            html += '</div>';
+
+            html += '<div class="suggestion-item"><div class="suggestion-title">薄弱知识点</div>';
+            if (weakPoints.length === 0) {
+                html += '<div>暂无明显薄弱点，继续保持练习节奏。</div>';
+            } else {
+                weakPoints.slice(0, 4).forEach(function(item) {
+                    html += '<div>' + (item.knowledgePointName || '未知知识点')
+                        + '（正确率 ' + formatPercent(item.accuracy) + '，共 ' + (item.totalExercises || 0) + ' 题）</div>';
+                });
+            }
+            html += '</div>';
+
+            html += '<div class="suggestion-item"><div class="suggestion-title">学习步骤（前5步）</div>';
+            if (steps.length === 0) {
+                html += '<div>暂无学习路径，请先进行练习，系统会自动生成路线。</div>';
+            } else {
+                steps.forEach(function(step) {
+                    html += '<div class="path-step-item">';
+                    html += '<div class="path-step-title">第' + (step.stepIndex || '-') + '步：' + escapeHtml(step.title || '学习任务') + '</div>';
+                    html += '<div class="path-step-reason">' + escapeHtml(step.reason || '根据你的学习情况推荐') + '</div>';
+                    html += '</div>';
+                });
+            }
+            html += '</div>';
+
+            $("#personalizedLearningPath").html(html);
+        }).fail(function() {
+            $("#personalizedLearningPath").text("加载失败");
+        });
+    }
+
+    function formatPercent(num) {
+        var val = Number(num || 0);
+        return val.toFixed(1) + "%";
+    }
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function submitUserInfo() {
+        var data = $("#userInfoForm").serializeArray();
+        $.ajax({
+            url: prefix + "/update",
+            type: "post",
+            data: data,
+            success: function(res) {
+                if (res.code == 0) {
+                    layer.msg("保存成功", {icon: 1});
+                    location.reload();
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }
+        });
+    }
+
+    function submitPassword() {
+        var $form = $("#passwordForm");
+        var oldPassword = $form.find("input[name='oldPassword']").val();
+        var newPassword = $form.find("input[name='newPassword']").val();
+        var confirmPassword = $form.find("input[name='confirmPassword']").val();
+
+        if (!oldPassword) {
+            layer.msg("请输入原密码", {icon: 2});
+            return;
+        }
+        if (!newPassword) {
+            layer.msg("请输入新密码", {icon: 2});
+            return;
+        }
+        if (!confirmPassword) {
+            layer.msg("请输入确认密码", {icon: 2});
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            layer.msg("两次输入的密码不一致", {icon: 2});
+            return;
+        }
+
+        $.ajax({
+            url: prefix + "/updatePwd",
+            type: "post",
+            data: {
+                oldPassword: oldPassword,
+                newPassword: newPassword
+            },
+            success: function(res) {
+                if (res.code == 0) {
+                    layer.msg("密码修改成功，请重新登录", {icon: 1});
+                    setTimeout(function() {
+                        location.href = ctx + "logout";
+                    }, 1500);
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }
+        });
+    }
+
+    function uploadAvatar() {
+        var url = prefix + "/avatar";
+        layer.open({
+            type: 2,
+            title: "修改头像",
+            area: ['800px', '600px'],
+            fix: false,
+            maxmin: true,
+            shade: 0.3,
+            content: url,
+            btn: ['确定', '关闭'],
+            yes: function(index, layero) {
+                var iframeWin = layero.find('iframe')[0];
+                iframeWin.contentWindow.submitHandler(index, layero);
+            },
+            cancel: function() {
+                return true;
+            }
+        });
+    }
+
+    // 添加头像上传处理
+    $('#avatarFile').change(function() {
+        var file = this.files[0];
+        if (!file) {
+            return;
+        }
+        
+        // 验证文件类型和大小
+        var isImage = /^image\//.test(file.type);
+        if (!isImage) {
+            layer.msg('请选择图片文件', {icon: 2});
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            layer.msg('图片大小不能超过5MB', {icon: 2});
+            return;
+        }
+        
+        // 显示上传进度
+        var loadingIndex = layer.load(1, {
+            shade: [0.1,'#fff']
+        });
+        
+        var formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: ctx + 'web/user/profile/updateAvatar',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                layer.close(loadingIndex);
+                if (res.code == 0) {
+                    $('#avatarImage').attr('src', res.data);
+                    layer.msg('上传成功', {icon: 1});
+                } else {
+                    layer.msg(res.msg || '上传失败', {icon: 2});
+                    console.error('上传失败:', res);
+                }
+            },
+            error: function(xhr, status, error) {
+                layer.close(loadingIndex);
+                layer.msg('上传失败：' + (error || '未知错误'), {icon: 2});
+                console.error('上传错误:', {xhr: xhr, status: status, error: error});
+            }
+        });
+    });
+</script>
+</body>
+</html>

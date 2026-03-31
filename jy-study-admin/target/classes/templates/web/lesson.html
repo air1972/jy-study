@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${lesson.title} + ' - 课程学习平台'">课程详情 - 课程学习平台</title>
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/web-common.css" rel="stylesheet"/>
+    <style>
+        .lesson-detail-container {
+            padding: 40px 0;
+            min-height: calc(100vh - 300px);
+        }
+
+        .lesson-header {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .lesson-cover {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 25px;
+            flex-shrink: 0;
+        }
+
+        .lesson-header-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lesson-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #343a40;
+            margin-top: 0;
+        }
+
+        .lesson-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .lesson-meta span {
+            margin-right: 20px;
+        }
+
+        .lesson-tags {
+            margin-bottom: 12px;
+        }
+
+        .lesson-tags .badge {
+            margin-right: 8px;
+            padding: 6px 12px;
+            border-radius: 15px;
+        }
+
+        .lesson-description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .video-wrapper video,
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .sync-subtitle-overlay {
+            position: absolute;
+            left: 50%;
+            bottom: 16px;
+            transform: translateX(-50%);
+            width: 88%;
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .8);
+            font-size: 22px;
+            line-height: 1.45;
+            font-weight: 600;
+            pointer-events: none;
+            z-index: 5;
+            min-height: 32px;
+        }
+
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 40px 0;
+            margin-top: 50px;
+        }
+        .lesson-question-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid #e9ecef;
+        }
+        .question-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        .question-input label {
+            font-weight: normal;
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .question-result {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #fff;
+            border: 1px dashed #d9d9d9;
+        }
+        .question-result.correct {
+            border-color: #28a745;
+            background: #f1fff4;
+        }
+        .question-result.wrong {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div th:replace="~{web/fragments/navbar :: navbar}"></div>
+
+    <!-- 主体内容 -->
+    <div class="lesson-detail-container">
+        <div class="container">
+            <!-- 课程头部信息 -->
+            <div class="lesson-header">
+                <div style="display: flex; align-items: flex-start;">
+                    <img th:if="${lesson.coverImg}" th:src="${lesson.coverImg}"
+                         class="lesson-cover" alt="课程封面">
+                    <img th:unless="${lesson.coverImg}" src="/img/default-course.png"
+                         class="lesson-cover" alt="默认封面">
+                    <div class="lesson-header-content">
+                        <h1 class="lesson-title" th:text="${lesson.title}">课程标题</h1>
+                        <div class="lesson-meta">
+                            <span><i class="fa fa-eye"></i> <span th:text="${lesson.viewCount}">0</span> 次浏览</span>
+                            <span><i class="fa fa-thumbs-up"></i> <span th:text="${lesson.likeCount}">0</span> 个点赞</span>
+                            <span><i class="fa fa-bookmark"></i> <span th:text="${lesson.collectCount}">0</span> 个收藏</span>
+                        </div>
+                        <div class="lesson-tags">
+                            <span class="badge badge-primary" th:text="${(lesson.versionName != null and lesson.versionName != '') ? lesson.versionName : '未分类'}">分类</span>
+                            <span class="badge badge-info" th:if="${lesson.subjectName != null and lesson.subjectName != ''}" th:text="${lesson.subjectName}">科目</span>
+                            <span class="badge badge-info" th:if="${lesson.gradeName != null and lesson.gradeName != ''}" th:text="${lesson.gradeName}">年级</span>
+                            <span class="badge badge-info" th:if="${lesson.volumeName != null and lesson.volumeName != ''}" th:text="${lesson.volumeName}">册子</span>
+                        </div>
+                        <div class="lesson-description">
+                            <h5><i class="fa fa-info-circle"></i> 课程简介</h5>
+                            <p th:text="${lesson.description}" style="margin-bottom: 0;">课程描述...</p>
+                        </div>
+                        <div class="lesson-actions" style="margin-top: 15px;">
+                            <button class="btn btn-like" style="margin-right: 10px; padding: 10px 30px; border-radius: 25px; transition: all .3s ease; border: 2px solid; background: transparent; font-weight: 500; color: #28a745; border-color: #28a745;" onclick="toggleLike()" id="likeBtn">
+                                <i class="fa fa-thumbs-up"></i> 点赞 <span id="likeCount" th:text="${lesson.likeCount}">0</span>
+                            </button>
+                            <button class="btn btn-collect" style="margin-right: 10px; padding: 10px 30px; border-radius: 25px; transition: all .3s ease; border: 2px solid; background: transparent; font-weight: 500; color: #5b73e8; border-color: #5b73e8;" onclick="toggleCollect()" id="collectBtn">
+                                <i class="fa fa-star"></i> 收藏 <span id="collectCount" th:text="${lesson.collectCount}">0</span>
+                            </button>
+                            <button class="btn btn-subtitle" style="margin-right: 10px; padding: 10px 30px; border-radius: 25px; transition: all .3s ease; border: 2px solid; background: transparent; font-weight: 500; color: #17a2b8; border-color: #17a2b8;" onclick="generateSubtitle()" id="subtitleBtn">
+                                <i class="fa fa-comments"></i> 重新生成弹幕
+                            </button>
+                            <button class="btn btn-analyze" style="padding: 10px 30px; border-radius: 25px; transition: all .3s ease; border: 2px solid; background: transparent; font-weight: 500; color: #6f42c1; border-color: #6f42c1;" onclick="analyzeLesson()" id="analyzeBtn">
+                                <i class="fa fa-robot"></i> AI解析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频播放区域 -->
+            <div class="lesson-header" th:if="${lesson.videoUrl}">
+                <h4 class="mb-4"><i class="fa fa-play-circle"></i> 课程视频</h4>
+                <div class="video-wrapper">
+                    <video id="lessonVideo" th:src="${lesson.videoUrl}" controls="controls" width="100%" height="100%">
+                        您的浏览器不支持视频播放，请升级浏览器以获得更好的体验。
+                    </video>
+                    <div id="syncSubtitleOverlay" class="sync-subtitle-overlay"></div>
+                </div>
+            </div>
+
+            <!-- 习题预览 -->
+            <div class="lesson-header" id="questionsSection" th:if="${exercises != null and !#lists.isEmpty(exercises)}">
+                <div class="questions-preview-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e9ecef;">
+                    <div class="questions-preview-title" style="font-size: 1.25rem; font-weight: 600; color: #343a40;">
+                        <i class="fa fa-question-circle"></i> 配套习题
+                    </div>
+                    <div class="questions-count">
+                        共 <span th:text="${#lists.size(exercises)}">0</span> 道题目
+                    </div>
+                </div>
+                <div class="questions-preview-content" style="margin-bottom: 20px;">
+                    <div th:each="exercise,iter : ${exercises}"
+                         class="lesson-question-item"
+                         th:attr="data-exercise-id=${exercise.exerciseId},data-type=${exercise.exerciseType},data-options=${exercise.options},data-answer=${exercise.answer},data-analysis=${exercise.analysis}">
+                        <div class="question-title">
+                            <span th:text="${iter.index + 1} + '. '">1.</span>
+                            <span th:text="${exercise.title}">示例题目</span>
+                        </div>
+                        <div class="question-input"></div>
+                        <div class="question-result" style="display:none;"></div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="checkLessonAnswers()" style="padding: 10px 28px; border-radius: 24px;">
+                        <i class="fa fa-check-circle"></i> 提交答案
+                    </button>
+                    <button class="btn btn-default" onclick="resetLessonAnswers()" style="padding: 10px 28px; border-radius: 24px; margin-left: 8px;">
+                        <i class="fa fa-undo"></i> 重置作答
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p>© 2024 课程学习平台。All rights reserved.</p>
+            <div class="mt-3">
+                <a href="#" class="text-white mx-2"><i class="fa fa-weixin fa-lg"></i></a>
+                <a href="#" class="text-white mx-2"><i class="fa fa-qq fa-lg"></i></a>
+                <a href="#" class="text-white mx-2"><i class="fa fa-weibo fa-lg"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script th:src="@{/js/jquery.min.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/ajax/libs/layer/layer.min.js}"></script>
+    <script th:src="@{/ruoyi/js/common.js}"></script>
+    <script th:src="@{/ruoyi/js/ry-ui.js}"></script>
+    
+    <script th:inline="javascript">
+        var ctx = /*[[@{/}]]*/'';
+        var prefix = ctx + "web/interaction";
+        var lessonId = /*[[${lesson.lessonId}]]*/ 0;
+        var isLiked = false;
+        var isCollected = false;
+        var subtitlePollTimer = null;
+        var subtitlePollStartedAt = 0;
+        var subtitleSegments = [];
+        var subtitleRawText = /*[[${lesson.videoSubtitleText}]]*/ "";
+
+        // 兼容兜底：避免 $.modal 未加载导致交互报错
+        if (!$.modal) {
+            $.modal = {
+                msgSuccess: function(msg) { if (window.layer) { layer.msg(msg, {icon: 1}); } else { alert(msg); } },
+                msgError: function(msg) { if (window.layer) { layer.msg(msg, {icon: 2}); } else { alert(msg); } },
+                alertError: function(msg) { if (window.layer) { layer.alert(msg, {icon: 2}); } else { alert(msg); } }
+            };
+        }
+
+        $(function() {
+            rebuildSubtitleSegments(subtitleRawText);
+            bindVideoSubtitleSync();
+            initLessonQuestionInputs();
+
+            // 获取点赞/收藏状态
+            $.ajax({
+                url: prefix + "/status",
+                type: "GET",
+                data: { type: "1", targetId: lessonId },
+                success: function(res) {
+                    if (res.code == 0) {
+                        isLiked = res.data.liked;
+                        isCollected = res.data.collected;
+                        updateInteractionButtons();
+                    }
+                }
+            });
+
+            // 记录浏览
+            $.ajax({
+                url: prefix + "/view",
+                type: "POST",
+                data: { type: "1", targetId: lessonId }
+            });
+        });
+
+        function toggleLike() {
+            if (!isLiked) {
+                handleLike("1", lessonId, function() {
+                    isLiked = true;
+                    $("#likeCount").text(parseInt($("#likeCount").text(), 10) + 1);
+                    updateInteractionButtons();
+                });
+            } else {
+                handleUnlike("1", lessonId, function() {
+                    isLiked = false;
+                    $("#likeCount").text(Math.max(0, parseInt($("#likeCount").text(), 10) - 1));
+                    updateInteractionButtons();
+                });
+            }
+        }
+
+        function toggleCollect() {
+            if (!isCollected) {
+                handleCollect("1", lessonId, function() {
+                    isCollected = true;
+                    $("#collectCount").text(parseInt($("#collectCount").text(), 10) + 1);
+                    updateInteractionButtons();
+                });
+            } else {
+                handleUncollect("1", lessonId, function() {
+                    isCollected = false;
+                    $("#collectCount").text(Math.max(0, parseInt($("#collectCount").text(), 10) - 1));
+                    updateInteractionButtons();
+                });
+            }
+        }
+
+        function updateInteractionButtons() {
+            if (isLiked) {
+                $("#likeBtn").addClass("active");
+                $("#likeBtn").html('<i class="fa fa-thumbs-up"></i> 已赞 <span id="likeCount">' + $("#likeCount").text() + '</span>');
+            } else {
+                $("#likeBtn").removeClass("active");
+                $("#likeBtn").html('<i class="fa fa-thumbs-up"></i> 点赞 <span id="likeCount">' + $("#likeCount").text() + '</span>');
+            }
+            if (isCollected) {
+                $("#collectBtn").addClass("active");
+                $("#collectBtn").html('<i class="fa fa-star"></i> 已收藏 <span id="collectCount">' + $("#collectCount").text() + '</span>');
+            } else {
+                $("#collectBtn").removeClass("active");
+                $("#collectBtn").html('<i class="fa fa-star"></i> 收藏 <span id="collectCount">' + $("#collectCount").text() + '</span>');
+            }
+        }
+
+        function analyzeLesson() {
+            if (handleLoginRequired(null)) {
+                return;
+            }
+            var analyzeBtn = $("#analyzeBtn");
+            analyzeBtn.prop("disabled", true);
+            analyzeBtn.html('<i class="fa fa-spinner fa-spin"></i> 分析中...');
+
+            if (typeof window.triggerLessonAnalysis !== 'function') {
+                analyzeBtn.prop("disabled", false);
+                analyzeBtn.html('<i class="fa fa-robot"></i> AI解析');
+                $.modal.alertError("AI聊天组件未加载，请刷新后重试");
+                return;
+            }
+
+            window.triggerLessonAnalysis(lessonId, function() {
+                analyzeBtn.prop("disabled", false);
+                analyzeBtn.html('<i class="fa fa-robot"></i> AI解析');
+            });
+        }
+
+        function generateSubtitle() {
+            if (handleLoginRequired(null)) {
+                return;
+            }
+            var subtitleBtn = $("#subtitleBtn");
+            subtitleBtn.prop("disabled", true);
+            subtitleBtn.html('<i class="fa fa-spinner fa-spin"></i> 生成中...');
+            $("#subtitleContainer").show();
+            setSubtitleText("正在识别字幕，请稍候...");
+
+            $.ajax({
+                url: ctx + "tts/recognize/subtitle/start",
+                type: "POST",
+                data: { lessonId: lessonId, force: true },
+                success: function(res) {
+                    if (res.code !== 0) {
+                        subtitleBtn.prop("disabled", false);
+                        subtitleBtn.html('<i class="fa fa-comments"></i> 重新生成弹幕');
+                        $.modal.alertError(res.msg || "启动字幕识别失败");
+                        return;
+                    }
+
+                    var data = res.data || {};
+                    if (data.status === "success" && data.result) {
+                        setSubtitleText(data.result);
+                        subtitleBtn.prop("disabled", false);
+                        subtitleBtn.html('<i class="fa fa-comments"></i> 重新生成弹幕');
+                        $.modal.msgSuccess("字幕已就绪");
+                        return;
+                    }
+
+                    startSubtitlePolling();
+                },
+                error: function() {
+                    subtitleBtn.prop("disabled", false);
+                    subtitleBtn.html('<i class="fa fa-comments"></i> 重新生成弹幕');
+                    $.modal.alertError("启动字幕识别请求失败");
+                }
+            });
+        }
+
+        function startSubtitlePolling() {
+            var subtitleBtn = $("#subtitleBtn");
+            subtitlePollStartedAt = Date.now();
+            if (subtitlePollTimer) {
+                clearInterval(subtitlePollTimer);
+            }
+
+            subtitlePollTimer = setInterval(function() {
+                var elapsed = Math.floor((Date.now() - subtitlePollStartedAt) / 1000);
+                subtitleBtn.html('<i class="fa fa-spinner fa-spin"></i> 生成中(' + elapsed + 's)...');
+
+                $.ajax({
+                    url: ctx + "tts/recognize/subtitle/status",
+                    type: "GET",
+                    data: { lessonId: lessonId },
+                    success: function(res) {
+                        if (res.code !== 0) {
+                            stopSubtitlePolling();
+                            $.modal.alertError(res.msg || "查询字幕状态失败");
+                            return;
+                        }
+
+                        var data = res.data || {};
+                        if (data.status === "success" && data.result) {
+                            $("#subtitleContainer").show();
+                            setSubtitleText(data.result);
+                            stopSubtitlePolling();
+                            $.modal.msgSuccess("字幕生成完成");
+                        } else if (data.status === "failed") {
+                            stopSubtitlePolling();
+                            $.modal.alertError(data.message || "字幕识别失败");
+                        } else {
+                            $("#subtitleContainer").show();
+                            var progress = (data.progress !== undefined && data.progress !== null) ? (data.progress + "%") : "--";
+                            var header = (data.message || "正在识别字幕，请稍候...") + "（进度 " + progress + "，已等待 " + elapsed + " 秒）";
+                            if (data.partialResult) {
+                                setSubtitleText(header + "\n\n" + data.partialResult);
+                            } else {
+                                setSubtitleText(header);
+                            }
+                        }
+                    },
+                    error: function() {
+                        // 轮询失败不立刻结束，避免瞬时网络抖动导致任务中断感知
+                    }
+                });
+            }, 2000);
+        }
+
+        function stopSubtitlePolling() {
+            if (subtitlePollTimer) {
+                clearInterval(subtitlePollTimer);
+                subtitlePollTimer = null;
+            }
+            var subtitleBtn = $("#subtitleBtn");
+            subtitleBtn.prop("disabled", false);
+            subtitleBtn.html('<i class="fa fa-comments"></i> 重新生成弹幕');
+        }
+
+        function initLessonQuestionInputs() {
+            $(".lesson-question-item").each(function(index) {
+                var $item = $(this);
+                var type = String($item.data("type") || "");
+                var options = parseExerciseOptions($item.attr("data-options"));
+                var name = "lesson_q_" + index;
+                var html = "";
+                if (type === "1" || type === "2") {
+                    var isSingle = (type === "1");
+                    var inputType = isSingle ? "radio" : "checkbox";
+                    var keys = Object.keys(options);
+                    if (keys.length === 0) {
+                        html = '<input type="text" class="form-control answer-text" placeholder="请输入答案">';
+                    } else {
+                        for (var i = 0; i < keys.length; i++) {
+                            var k = keys[i];
+                            html += '<label><input type="' + inputType + '" name="' + name + '" value="' + escapeHtml(k) + '" data-text="' + escapeHtml(options[k]) + '"> ' + escapeHtml(k) + '. ' + escapeHtml(options[k]) + '</label>';
+                        }
+                    }
+                } else if (type === "3") {
+                    html += '<label><input type="radio" name="' + name + '" value="对"> 对</label>';
+                    html += '<label><input type="radio" name="' + name + '" value="错"> 错</label>';
+                } else {
+                    html = '<textarea class="form-control answer-text" rows="3" placeholder="请输入你的答案"></textarea>';
+                }
+                $item.find(".question-input").html(html);
+            });
+        }
+
+        function parseExerciseOptions(raw) {
+            var result = {};
+            if (!raw) return result;
+            var text = $.trim(raw);
+            if (!text) return result;
+            try {
+                var obj = JSON.parse(text);
+                if ($.isArray(obj)) {
+                    for (var i = 0; i < obj.length; i++) result[String.fromCharCode(65 + i)] = String(obj[i]);
+                    return result;
+                }
+                if (obj && typeof obj === "object") {
+                    if (obj.options && typeof obj.options === "object") obj = obj.options;
+                    $.each(obj, function(k, v) { result[String(k).toUpperCase()] = String(v); });
+                    return result;
+                }
+            } catch (e) {}
+            var lines = text.split(/\r?\n/);
+            var optionPattern = /^([A-Za-z])[\.\:：、\)]\s*(.*)$/;
+            for (var j = 0; j < lines.length; j++) {
+                var line = $.trim(lines[j]);
+                var m = line.match(optionPattern);
+                if (m) result[m[1].toUpperCase()] = $.trim(m[2]);
+            }
+            return result;
+        }
+
+        function checkLessonAnswers() {
+            if (handleLoginRequired(null)) {
+                return;
+            }
+            var records = [];
+            $(".lesson-question-item").each(function() {
+                var $item = $(this);
+                records.push({
+                    exerciseId: Number($item.data("exercise-id")),
+                    userAnswer: getUserAnswer($item, String($item.data("type") || ""))
+                });
+            });
+            $.ajax({
+                url: ctx + "web/exercise/submit-lesson",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(records),
+                success: function(res) {
+                    if (res.code !== 0) {
+                        $.modal.alertError(res.msg || "提交失败");
+                        return;
+                    }
+                    var details = (res.data && res.data.details) ? res.data.details : [];
+                    $(".lesson-question-item").each(function() {
+                        var $item = $(this);
+                        var exerciseId = Number($item.data("exercise-id"));
+                        var detail = null;
+                        for (var i = 0; i < details.length; i++) {
+                            if (Number(details[i].exerciseId) === exerciseId) {
+                                detail = details[i];
+                                break;
+                            }
+                        }
+                        if (!detail) return;
+                        var resultHtml = '';
+                        resultHtml += '<div><strong>结果：</strong>' + (detail.isCorrect ? '回答正确' : '回答错误') + '</div>';
+                        resultHtml += '<div><strong>你的答案：</strong>' + escapeHtml(detail.userAnswer || '（未作答）') + '</div>';
+                        resultHtml += '<div><strong>正确答案：</strong>' + escapeHtml(detail.correctAnswer || '暂无') + '</div>';
+                        resultHtml += '<div><strong>答案解析：</strong>' + escapeHtml(detail.explanation || '暂无解析') + '</div>';
+                        var $box = $item.find(".question-result");
+                        $box.removeClass("correct wrong");
+                        if (detail.isCorrect) $box.addClass("correct"); else $box.addClass("wrong");
+                        $box.html(resultHtml).show();
+                    });
+                    $.modal.msgSuccess("提交完成：答对 " + (res.data.correctCount || 0) + " / " + (res.data.totalCount || 0));
+                    document.getElementById("questionsSection").scrollIntoView({ behavior: "smooth", block: "start" });
+                },
+                error: function() {
+                    $.modal.alertError("提交失败，请稍后重试");
+                }
+            });
+        }
+
+        function resetLessonAnswers() {
+            $(".lesson-question-item input[type='radio'], .lesson-question-item input[type='checkbox']").prop("checked", false);
+            $(".lesson-question-item .answer-text").val("");
+            $(".lesson-question-item .question-result").hide().removeClass("correct wrong").html("");
+        }
+
+        function getUserAnswer($item, type) {
+            if (type === "1" || type === "3") {
+                return $.trim($item.find("input[type='radio']:checked").val() || "");
+            }
+            if (type === "2") {
+                var vals = [];
+                $item.find("input[type='checkbox']:checked").each(function() { vals.push($(this).val()); });
+                vals.sort();
+                return vals.join(",");
+            }
+            return $.trim($item.find(".answer-text").val() || "");
+        }
+
+        function judgeAnswer(type, answer, userAnswer) {
+            var expected = $.trim(String(answer || ""));
+            var actual = $.trim(String(userAnswer || ""));
+            if (!expected && !actual) return true;
+            if (type === "4") return null;
+            if (type === "3") {
+                return normalizeTf(expected) === normalizeTf(actual);
+            }
+            if (type === "1" || type === "2") {
+                return normalizeChoice(expected).join(",") === normalizeChoice(actual).join(",");
+            }
+            return normalizeText(expected) === normalizeText(actual);
+        }
+
+        function normalizeTf(s) {
+            var v = normalizeText(s);
+            if (v === "true" || v === "t" || v === "y" || v === "1" || v === "对" || v === "正确" || v === "√") return "对";
+            if (v === "false" || v === "f" || v === "n" || v === "0" || v === "错" || v === "错误" || v === "×") return "错";
+            return v;
+        }
+
+        function normalizeChoice(s) {
+            var v = String(s || "").toUpperCase().replace(/[，、;\s]+/g, ",");
+            if (/^[A-Z]+$/.test(v) && v.length > 1) {
+                v = v.split("").join(",");
+            }
+            var parts = v.split(",").filter(function(x) { return !!x; });
+            parts.sort();
+            return parts;
+        }
+
+        function normalizeText(s) {
+            return String(s || "").toLowerCase().replace(/\s+/g, "");
+        }
+
+        function escapeHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function setSubtitleText(rawText) {
+            subtitleRawText = rawText || "";
+            rebuildSubtitleSegments(subtitleRawText);
+            $("#subtitleText").text(toPlainSubtitleText(subtitleRawText));
+            syncSubtitleByCurrentTime();
+        }
+
+        function toPlainSubtitleText(rawText) {
+            if (!rawText) return "";
+            var lines = rawText.split(/\r?\n/);
+            var plain = [];
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].replace(/^\[\[\d+,\d+\]\]/, "").trim();
+                if (line) plain.push(line);
+            }
+            return plain.join("\n");
+        }
+
+        function rebuildSubtitleSegments(rawText) {
+            subtitleSegments = [];
+            if (!rawText) return;
+            var lines = rawText.split(/\r?\n/);
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) continue;
+                var m = line.match(/^\[\[(\d+),(\d+)\]\](.*)$/);
+                if (!m) continue;
+                subtitleSegments.push({
+                    start: parseInt(m[1], 10),
+                    end: parseInt(m[2], 10),
+                    text: (m[3] || "").trim()
+                });
+            }
+        }
+
+        function bindVideoSubtitleSync() {
+            var video = document.getElementById("lessonVideo");
+            if (!video) return;
+            video.addEventListener("timeupdate", syncSubtitleByCurrentTime);
+            video.addEventListener("seeked", syncSubtitleByCurrentTime);
+            video.addEventListener("pause", syncSubtitleByCurrentTime);
+        }
+
+        function syncSubtitleByCurrentTime() {
+            var overlay = document.getElementById("syncSubtitleOverlay");
+            var video = document.getElementById("lessonVideo");
+            if (!overlay || !video) return;
+            if (!subtitleSegments || subtitleSegments.length === 0) {
+                overlay.textContent = "";
+                return;
+            }
+            var nowMs = Math.floor((video.currentTime || 0) * 1000);
+            var hit = "";
+            for (var i = 0; i < subtitleSegments.length; i++) {
+                var seg = subtitleSegments[i];
+                if (nowMs >= seg.start && nowMs <= seg.end) {
+                    hit = seg.text;
+                    break;
+                }
+            }
+            overlay.textContent = hit;
+        }
+    </script>
+    
+    <div th:replace="~{web/fragments/ai-chat :: ai-chat}"></div>
+</body>
+</html>

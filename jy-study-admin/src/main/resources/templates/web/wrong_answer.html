@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('错题本')" />
+    <style>
+        :root {
+            --bg-main: #eef3f8;
+            --ink-900: #1f2d3d;
+            --ink-600: #5c7085;
+            --brand: #0ea5a4;
+            --brand-strong: #0b7f86;
+            --accent: #f59e0b;
+            --line: #dce6f0;
+        }
+        body {
+            background:
+                radial-gradient(circle at 90% 8%, rgba(14, 165, 164, 0.15), transparent 36%),
+                radial-gradient(circle at 5% 0%, rgba(245, 158, 11, 0.12), transparent 28%),
+                var(--bg-main);
+            font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+        }
+        .wa-shell {
+            max-width: 1100px;
+            margin: 28px auto 40px;
+            padding: 0 10px;
+        }
+        .wa-hero {
+            background: linear-gradient(120deg, #0f766e, #0ea5a4 60%, #14b8a6);
+            border-radius: 14px;
+            color: #ecfeff;
+            padding: 22px 26px;
+            margin-bottom: 16px;
+            box-shadow: 0 12px 24px rgba(13, 71, 83, 0.24);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .wa-hero h2 {
+            margin: 0 0 6px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .wa-hero p {
+            margin: 0;
+            color: rgba(236, 254, 255, 0.92);
+            font-size: 14px;
+        }
+        .wa-badge {
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.34);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .wa-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .wa-toolbar .btn {
+            border-radius: 10px;
+        }
+        .wa-card {
+            background: #fff;
+            border: 1px solid #e9f0f7;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            padding: 18px;
+            margin-bottom: 14px;
+            transition: all 0.25s;
+        }
+        .wa-card:hover {
+            transform: translateY(-2px);
+            border-color: #d3e6f7;
+            box-shadow: 0 10px 20px rgba(13, 52, 84, 0.08);
+        }
+        .wa-title {
+            font-size: 16px;
+            color: var(--ink-900);
+            line-height: 1.7;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .wa-meta {
+            font-size: 13px;
+            color: var(--ink-600);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .wa-pill {
+            background: #fff7e8;
+            border: 1px solid #f8d8aa;
+            color: #b45309;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .wa-actions { text-align: right; margin-top: 10px; }
+        .pagination-container { margin-top: 20px; text-align: center; }
+        .ai-box {
+            background: #fff;
+            border: 1px solid #e5eff7;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+        .ai-content {
+            white-space: pre-wrap;
+            color: #2a3f52;
+            line-height: 1.8;
+            background: #f8fbff;
+            border: 1px dashed #d4e3f2;
+            border-radius: 10px;
+            padding: 14px;
+            min-height: 80px;
+        }
+        .empty-box {
+            text-align: center;
+            background: #fff;
+            border: 1px dashed #cfdceb;
+            border-radius: 12px;
+            padding: 40px 14px;
+            color: #65819a;
+        }
+        @media (max-width: 768px) {
+            .wa-shell { margin: 16px auto 26px; padding: 0 8px; }
+            .wa-hero { padding: 18px 16px; display: block; }
+            .wa-hero h2 { font-size: 22px; }
+            .wa-badge { display: inline-block; margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wa-shell">
+        <div class="wa-hero">
+            <div>
+                <h2>错题本</h2>
+                <p>集中复盘错题，使用千问建议生成可执行的复习计划。</p>
+            </div>
+            <div class="wa-badge">每页 5 题</div>
+        </div>
+        <div class="wa-toolbar">
+            <div>
+                <button class="btn btn-info" onclick="generateAiSuggestion()"><i class="fa fa-lightbulb-o"></i> 千问建议</button>
+            </div>
+            <div>
+                <button class="btn btn-default" onclick="goBack()">返回</button>
+            </div>
+        </div>
+        <div class="ai-box" id="aiSuggestionBox" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>学习建议（千问）</strong>
+                <button class="btn btn-link btn-sm" onclick="generateAiSuggestion()">刷新</button>
+            </div>
+            <div class="ai-content" id="aiSuggestionContent"></div>
+        </div>
+        <div id="wrong-answer-list"></div>
+        <div id="wrong-answer-pagination" class="pagination-container"></div>
+    </div>
+    <!-- 题目详情模态框 -->
+    <div class="modal fade" id="wrongDetailModal" tabindex="-1" role="dialog" aria-labelledby="wrongDetailTitle">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="wrongDetailTitle">题目详情</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" id="wrongDetailBody"></div>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "web/exercise";
+        $(function() { loadWrongAnswers(1); });
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = prefix;
+            }
+        }
+
+        function loadWrongAnswers(page) {
+            $.get(prefix + "/wrong-answer/list", { pageNum: page }, function(res) {
+                if (res.code == 0) {
+                    var rows = res.rows, total = res.total;
+                    var html = "";
+                    rows.forEach(function(item) {
+                        html += '<div class="wa-card">';
+                        html += '  <div class="wa-title">' + (item.content || '题目已删除') + '</div>';
+                        html += '  <div class="wa-meta">';
+                        html += '    <span class="wa-pill">错误次数：' + (item.wrongCount || 0) + '</span>';
+                        html += '    <span>最后答错：' + (item.lastWrongTime || '') + '</span>';
+                        html += '  </div>';
+                        html += '  <div class="wa-actions">';
+                        html += '    <button class="btn btn-link btn-sm" onclick="showExerciseDetail(' + item.exerciseId + ')">题目详情</button>';
+                        html += '  </div>';
+                        html += '</div>';
+                    });
+                    $("#wrong-answer-list").html(html || '<div class="empty-box">暂无错题记录</div>');
+                    renderPagination("#wrong-answer-pagination", total, page, 5, "loadWrongAnswers");
+                } else {
+                    $("#wrong-answer-list").html('<div class="empty-box">加载失败：' + res.msg + '</div>');
+                }
+            });
+        }
+
+        function showExerciseDetail(id) {
+            $.get(prefix + "/detail/" + id, function(res) {
+                if (res.code == 0) {
+                    var ex = res.data;
+                    var content = '<div style="white-space: pre-wrap;">' + (ex.content || '') + '</div>'
+                                + '<div class="mt-2 text-success"><strong>正确答案：</strong>' + (ex.answer || '') + '</div>'
+                                + '<div class="mt-2"><strong>解析：</strong>' + (ex.explanation || '暂无解析') + '</div>';
+                    $("#wrongDetailTitle").text("题目详情");
+                    $("#wrongDetailBody").html(content);
+                    $("#wrongDetailModal").modal('show');
+                } else {
+                    $.modal.alertError(res.msg);
+                }
+            });
+        }
+
+        function renderPagination(selector, total, current, size, funcName) {
+            var pages = Math.ceil(total / size);
+            if (pages <= 1) { $(selector).empty(); return; }
+            var html = '<ul class="pagination">';
+            html += '<li class="page-item ' + (current == 1 ? 'disabled' : '') + '"><a class="page-link" href="javascript:void(0)" onclick="' + funcName + '(' + (current - 1) + ')">上一页</a></li>';
+            for (var i = 1; i <= pages; i++) {
+                if (i == current) html += '<li class="page-item active"><span class="page-link">' + i + '</span></li>';
+                else if (i <= 3 || i > pages - 3 || (i >= current - 1 && i <= current + 1))
+                    html += '<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="' + funcName + '(' + i + ')">' + i + '</a></li>';
+                else if (i == 4 || i == pages - 3) html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            html += '<li class="page-item ' + (current == pages ? 'disabled' : '') + '"><a class="page-link" href="javascript:void(0)" onclick="' + funcName + '(' + (current + 1) + ')">下一页</a></li>';
+            html += '</ul>';
+            $(selector).html(html);
+        }
+
+        function generateAiSuggestion() {
+            $("#aiSuggestionBox").show();
+            $("#aiSuggestionContent").text("正在生成学习建议，请稍后...");
+            $.get(prefix + "/wrong-answer/suggestion", function(res) {
+                if (res.code == 0) {
+                    $("#aiSuggestionContent").text(res.data || "暂无建议");
+                } else {
+                    $("#aiSuggestionContent").text(res.msg || "生成失败");
+                }
+            }).fail(function() {
+                $("#aiSuggestionContent").text("生成失败");
+            });
+        }
+    </script>
+</body>
+</html>

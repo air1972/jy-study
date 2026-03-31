@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索结果 - 课程学习平台</title>
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/web-common.css" rel="stylesheet"/>
+    <style>
+        body { background: #f7f9fc; }
+        .search-header {
+            padding: 28px 0;
+            background: linear-gradient(120deg, #5ba7ff 0%, #84c5ff 100%);
+            color: #fff;
+        }
+        .search-box { max-width: 760px; margin: 0 auto; }
+        .search-input {
+            height: 46px;
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, .12);
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3a4f;
+            margin: 26px 0 16px;
+        }
+        .result-card {
+            border: 1px solid #edf0f5;
+            border-radius: 10px;
+            background: #fff;
+            margin-bottom: 16px;
+            transition: all .2s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
+        }
+        .result-title { font-size: 18px; font-weight: 700; color: #1f2d3d; }
+        .result-desc { color: #6b7785; margin-top: 8px; }
+        .empty-box {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #edf0f5;
+            padding: 40px 20px;
+            text-align: center;
+            color: #8894a3;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{web/fragments/navbar :: navbar}"></div>
+
+<div class="search-header">
+    <div class="container text-center">
+        <h3>搜索结果</h3>
+        <p class="mb-3" th:text="${not #strings.isEmpty(keyword)} ? '关键词：' + ${keyword} : '请输入关键词搜索课程或文章'"></p>
+        <div class="search-box">
+            <input id="keywordInput" type="text" class="form-control search-input" placeholder="搜索课程或文章..." th:value="${keyword}">
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="section-title">课程结果（<span th:text="${lessons == null ? 0 : lessons.size()}">0</span>）</div>
+    <div th:if="${lessons != null and !lessons.isEmpty()}">
+        <div class="result-card p-3" th:each="lesson : ${lessons}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="result-title" th:text="${lesson.title}">课程标题</div>
+                    <div class="result-desc" th:text="${lesson.description}">课程描述</div>
+                </div>
+                <a class="btn btn-primary btn-sm" th:href="@{'/web/lesson/' + ${lesson.lessonId}}">进入课程</a>
+            </div>
+        </div>
+    </div>
+    <div th:if="${lessons == null or lessons.isEmpty()}" class="empty-box">未找到相关课程</div>
+
+    <div class="section-title">文章结果（<span th:text="${articles == null ? 0 : articles.size()}">0</span>）</div>
+    <div th:if="${articles != null and !articles.isEmpty()}">
+        <div class="result-card p-3" th:each="article : ${articles}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="result-title" th:text="${article.title}">文章标题</div>
+                    <div class="result-desc" th:text="${article.remark}">文章摘要</div>
+                </div>
+                <a class="btn btn-outline-primary btn-sm" th:href="@{'/web/article/' + ${article.articleId}}">阅读文章</a>
+            </div>
+        </div>
+    </div>
+    <div th:if="${articles == null or articles.isEmpty()}" class="empty-box">未找到相关文章</div>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script>
+    (function() {
+        function goSearch() {
+            var keyword = ($("#keywordInput").val() || "").trim();
+            if (!keyword) {
+                return;
+            }
+            window.location.href = "/web/search?keyword=" + encodeURIComponent(keyword);
+        }
+        $("#keywordInput").on("keyup", function(e) {
+            if (e.keyCode === 13) {
+                goSearch();
+            }
+        });
+    })();
+</script>
+</body>
+</html>

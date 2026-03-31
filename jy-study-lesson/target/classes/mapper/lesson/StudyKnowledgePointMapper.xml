@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyKnowledgePointMapper">
+    
+    <resultMap type="StudyKnowledgePoint" id="StudyKnowledgePointResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="description"    column="description"    />
+        <result property="contentType"    column="content_type"    />
+        <result property="contentId"    column="content_id"    />
+        <result property="sourceTitle"    column="source_title"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectStudyKnowledgePointVo">
+        select id, name, description, content_type, content_id, source_title, create_by, create_time, update_by, update_time, remark from study_knowledge_point
+    </sql>
+
+    <select id="selectStudyKnowledgePointList" parameterType="StudyKnowledgePoint" resultMap="StudyKnowledgePointResult">
+        <include refid="selectStudyKnowledgePointVo"/>
+        <where>
+            <if test="id != null"> and id = #{id}</if>
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="contentType != null  and contentType != ''"> and content_type = #{contentType}</if>
+            <if test="contentId != null "> and content_id = #{contentId}</if>
+            <if test="sourceTitle != null  and sourceTitle != ''"> and source_title like concat('%', #{sourceTitle}, '%')</if>
+        </where>
+    </select>
+
+    <select id="selectStudyKnowledgePointById" parameterType="Long" resultMap="StudyKnowledgePointResult">
+        <include refid="selectStudyKnowledgePointVo"/>
+        where id = #{id}
+    </select>
+    
+    <insert id="insertStudyKnowledgePoint" parameterType="StudyKnowledgePoint" useGeneratedKeys="true" keyProperty="id">
+        insert into study_knowledge_point
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="contentType != null and contentType != ''">content_type,</if>
+            <if test="contentId != null">content_id,</if>
+            <if test="sourceTitle != null and sourceTitle != ''">source_title,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="contentType != null and contentType != ''">#{contentType},</if>
+            <if test="contentId != null">#{contentId},</if>
+            <if test="sourceTitle != null and sourceTitle != ''">#{sourceTitle},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateStudyKnowledgePoint" parameterType="StudyKnowledgePoint">
+        update study_knowledge_point
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="contentType != null and contentType != ''">content_type = #{contentType},</if>
+            <if test="contentId != null">content_id = #{contentId},</if>
+            <if test="sourceTitle != null and sourceTitle != ''">source_title = #{sourceTitle},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteStudyKnowledgePointById" parameterType="Long">
+        delete from study_knowledge_point where id = #{id}
+    </delete>
+
+    <delete id="deleteStudyKnowledgePointByIds" parameterType="String">
+        delete from study_knowledge_point where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

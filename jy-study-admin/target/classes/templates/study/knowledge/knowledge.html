@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('知识点列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>知识点名称：</label>
+                                <input type="text" name="name"/>
+                            </li>
+                            <li>
+                                <label>内容来源：</label>
+                                <input type="text" name="sourceTitle"/>
+                            </li>
+                            <li>
+                                <label>来源类型：</label>
+                                <select name="contentType" id="contentTypeSelect" class="form-control">
+                                    <option value="">全部</option>
+                                    <option value="article">文章</option>
+                                    <option value="lesson">课程</option>
+                                </select>
+                            </li>
+                            <li>
+                                <label>对应内容：</label>
+                                <select name="contentId" id="contentIdSelect" class="form-control">
+                                    <option value="">全部</option>
+                                </select>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="resetQuery()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="study:knowledge:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-info" onclick="generateWithAi()" shiro:hasPermission="study:knowledge:add">
+                    <i class="fa fa-magic"></i> AI 生成
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="study:knowledge:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="aiGenerateModal" tabindex="-1" role="dialog" aria-labelledby="aiGenerateModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="aiGenerateModalLabel">AI 生成知识点</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="aiGenerateForm">
+                        <div class="form-group">
+                            <label>内容类型</label>
+                            <select id="aiContentType" class="form-control">
+                                <option value="article">文章</option>
+                                <option value="lesson">课程</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>选择内容</label>
+                            <select id="aiContentId" class="form-control">
+                                <!-- 动态加载内容 -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAiGenerate()">生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('study:knowledge:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('study:knowledge:remove')}]];
+        var prefix = ctx + "study/knowledge";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                modalName: "知识点",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'id',
+                    title: '知识点ID'
+                },
+                {
+                    field: 'name',
+                    title: '知识点名称'
+                },
+                {
+                    field: 'description',
+                    title: '知识点描述'
+                },
+                {
+                    field: 'sourceTitle',
+                    title: '内容来源'
+                },
+                {
+                    field: 'contentType',
+                    title: '来源类型',
+                    formatter: function(value, row, index) {
+                        if (value === 'article') return '文章';
+                        if (value === 'lesson') return '课程';
+                        return '手动添加';
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.id + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+
+            $("#contentTypeSelect").on("change", function() {
+                loadSourceOptions($(this).val());
+            });
+            $("#contentIdSelect").on("change", function() {
+                $.table.search();
+            });
+        });
+
+        function resetQuery() {
+            $.form.reset();
+            $("#contentTypeSelect").val("");
+            $("#contentIdSelect").html('<option value="">全部</option>');
+            $.table.search();
+        }
+
+        function loadSourceOptions(contentType) {
+            if (!contentType) {
+                $("#contentIdSelect").html('<option value="">全部</option>');
+                $.table.search();
+                return;
+            }
+            var url = contentType === "article" ? "/articles" : "/lessons";
+            $.get(prefix + url, function(result) {
+                var html = '<option value="">全部</option>';
+                if (result.code === 0 && result.data) {
+                    result.data.forEach(function(item) {
+                        var id = contentType === "article" ? item.articleId : item.lessonId;
+                        html += '<option value="' + id + '">' + item.title + '</option>';
+                    });
+                }
+                $("#contentIdSelect").html(html);
+                $.table.search();
+            });
+        }
+        function generateWithAi() {
+            loadContentOptions('article');
+            $("#aiGenerateModal").modal('show');
+        }
+
+        $("#aiContentType").change(function() {
+            var contentType = $(this).val();
+            loadContentOptions(contentType);
+        });
+
+        function loadContentOptions(contentType) {
+            var url = (contentType === 'article') ? "/articles" : "/lessons";
+            $.get(prefix + url, function(result) {
+                var options = "";
+                if (result.code == 0) {
+                    result.data.forEach(function(item) {
+                        var id = (contentType === 'article') ? item.articleId : item.lessonId;
+                        options += '<option value="' + id + '">' + item.title + '</option>';
+                    });
+                }
+                $("#aiContentId").html(options);
+            });
+        }
+
+        function submitAiGenerate() {
+            var contentType = $("#aiContentType").val();
+            var contentId = $("#aiContentId").val();
+            if (!contentId) {
+                $.modal.alertWarning("请选择内容");
+                return;
+            }
+            $.modal.loading("正在生成中，请稍后...");
+            $.ajax({
+                url: prefix + "/ai-generate-by-id",
+                type: "POST",
+                data: { contentType: contentType, contentId: contentId },
+                success: function(result) {
+                    $.modal.closeLoading();
+                    if (result.code == 0) {
+                        $.modal.msgSuccess("生成成功");
+                        $.table.refresh();
+                        $("#aiGenerateModal").modal('hide');
+                    } else {
+                        $.modal.alertError(result.msg);
+                    }
+                },
+                error: function() {
+                    $.modal.closeLoading();
+                    $.modal.alertError("网络错误，请稍后重试");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

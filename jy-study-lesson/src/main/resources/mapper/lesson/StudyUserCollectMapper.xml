@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyUserCollectMapper">
+
+    <resultMap type="StudyUserCollect" id="UserCollectResult">
+        <id     property="collectId"   column="collect_id"   />
+        <result property="userId"      column="user_id"      />
+        <result property="type"        column="type"         />
+        <result property="targetId"    column="target_id"    />
+        <result property="createTime"  column="create_time"  />
+    </resultMap>
+
+    <insert id="insertUserCollect" parameterType="StudyUserCollect">
+        insert into study_user_collect (
+            user_id,
+            type,
+            target_id,
+            create_time
+        ) values (
+            #{userId},
+            #{type},
+            #{targetId},
+            #{createTime}
+        )
+    </insert>
+
+    <select id="selectUserCollect" resultMap="UserCollectResult">
+        select * from study_user_collect
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+        limit 1
+    </select>
+
+    <delete id="deleteUserCollect">
+        delete from study_user_collect 
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+    </delete>
+
+    <select id="checkCollected" resultType="boolean">
+        select count(1) from study_user_collect
+        where user_id = #{userId} and type = #{type} and target_id = #{targetId}
+    </select>
+
+    <select id="selectUserCollectionWithDetails" resultType="com.jy.study.lesson.domain.dto.UserCollectionDTO">
+        SELECT
+            c.collect_id as id,
+            c.user_id as userId,
+            c.target_id as targetId,
+            c.type,
+            CASE
+                WHEN c.type = '1' THEN l.title
+                WHEN c.type = '2' THEN a.title
+                ELSE ''
+                END as title,
+            c.create_time as createTime,
+            CASE
+                WHEN c.type = '2' THEN SUBSTRING(a.content, 1, 150)
+                ELSE ''
+                END as contentSummary,
+            CASE
+                WHEN c.type = '1' THEN SUBSTRING(l.description, 1, 150)
+                ELSE ''
+                END as descriptionSummary
+        FROM
+            study_user_collect c
+                LEFT JOIN
+            study_lesson l ON c.type = '1' AND c.target_id = l.lesson_id
+                LEFT JOIN
+            study_article a ON c.type = '2' AND c.target_id = a.article_id
+        WHERE
+            c.user_id = #{userId}
+        ORDER BY
+            c.create_time DESC
+            LIMIT
+            #{limit}
+    </select>
+
+</mapper> 

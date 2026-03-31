@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('课程列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="formId">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                <label>课程标题：</label>
+                                <input type="text" name="title"/>
+                            </li>
+                            <li>
+                                <label>课程描述：</label>
+                                <input type="text" name="description"/>
+                            </li>
+                            <li>
+                                <label>课程标签：</label>
+                                <input type="text" name="tags"/>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+                <a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="system:lesson:add">
+                    <i class="fa fa-plus"></i> 添加
+                </a>
+                <a class="btn btn-primary single disabled" onclick="$.operate.edit()" shiro:hasPermission="system:lesson:edit">
+                    <i class="fa fa-edit"></i> 修改
+                </a>
+                <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="system:lesson:remove">
+                    <i class="fa fa-remove"></i> 删除
+                </a>
+                <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="system:lesson:export">
+                    <i class="fa fa-download"></i> 导出
+                </a>
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var editFlag = [[${@permission.hasPermi('system:lesson:edit')}]];
+        var removeFlag = [[${@permission.hasPermi('system:lesson:remove')}]];
+        var prefix = ctx + "lesson";
+
+        $(function() {
+            var options = {
+                url: prefix + "/list",
+                createUrl: prefix + "/add",
+                updateUrl: prefix + "/edit/{id}",
+                removeUrl: prefix + "/remove",
+                exportUrl: prefix + "/export",
+                modalName: "课程",
+                columns: [{
+                    checkbox: true
+                },
+                {
+                    field: 'lessonId',
+                    title: '课程ID',
+                    visible: false,
+                    sortable: true,
+                    sortName: 'lesson_id'
+                },
+                {
+                    field: 'title',
+                    title: '课程标题'
+                },
+                {
+                    field: 'coverImg',
+                    title: '课程封面图片',
+                    visible: false
+                },
+                {
+                    field: 'description',
+                    title: '课程描述',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value, 50, "open");
+                    }
+                },
+                {
+                    field: 'tags',
+                    title: '课程标签',
+                    formatter: function(value, row, index) {
+                        if (!value) return '';
+                        var tags = value.split(',');
+                        var html = [];
+                        for (var i = 0; i < tags.length; i++) {
+                            html.push('<span class="badge badge-info">' + tags[i] + '</span>');
+                        }
+                        return html.join(' ');
+                    }
+                },
+                {
+                    field: 'status',
+                    title: '状态'
+                },
+                {
+                    field: 'sort',
+                    title: '排序',
+                    sortable: true
+                },
+                {
+                    field: 'viewCount',
+                    title: '浏览量',
+                    sortable: true,
+                    sortName: 'view_count'
+                },
+                {
+                    field: 'likeCount',
+                    title: '点赞数',
+                    sortable: true,
+                    sortName: 'like_count'
+                },
+                {
+                    field: 'collectCount',
+                    title: '收藏数',
+                    sortable: true,
+                    sortName: 'collect_count'
+                },
+                {
+                    field: 'createBy',
+                    title: '创建者'
+                }, {
+                    field: 'createTime',
+                    title: '创建时间',
+                    sortable: true,
+                    sortName: 'create_time'
+                },
+                 {
+                     field: 'updateTime',
+                     title: '更新时间',
+                     sortable: true,
+                     sortName: 'update_time'
+                 },
+                {
+                    field: 'videoUrl',
+                    title: 'AI视频',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        if (value) {
+                            var actions = [];
+                            actions.push('<a class="btn btn-info btn-xs" href="' + value + '" target="_blank"><i class="fa fa-play"></i> 播放</a> ');
+                            actions.push('<a class="btn btn-warning btn-xs" onclick="generateVideo(\'' + row.lessonId + '\')"><i class="fa fa-refresh"></i> 重新生成</a>');
+                            return actions.join('');
+                        } else {
+                            return '<a class="btn btn-primary btn-xs" onclick="generateVideo(\'' + row.lessonId + '\')"><i class="fa fa-magic"></i> 生成视频</a>';
+                        }
+                    }
+                },
+                {
+                    field: 'remark',
+                    title: '备注',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value, 10, "open");
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.lessonId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+                        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="detail(\'' + row.lessonId + '\')"><i class="fa fa-search"></i>详情</a> ');
+                        actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.lessonId + '\')"><i class="fa fa-remove"></i>删除</a>');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+
+        /* 详情查看 */
+        function detail(id) {
+            var url = prefix + '/detail/' + id;
+            $.modal.open("查看课程", url);
+        }
+
+        /* 打开生成视频对话框 */
+        function generateVideo(lessonId) {
+            $("#lessonId").val(lessonId);
+            $("#content").val('');
+            $("#generateVideoModal").modal('show');
+        }
+
+        /* 提交生成视频请求 */
+        function submitGenerateVideo() {
+            var lessonId = $("#lessonId").val();
+            var content = $("#content").val();
+            
+            if (!content) {
+                $.modal.alertWarning("请输入视频内容");
+                return;
+            }
+
+            $("#generateVideoModal").modal('hide');
+            $.modal.loading("正在生成，请稍候...");
+            
+            $.ajax({
+                url: ctx + "video/generate/retalk",
+                type: "POST",
+                data: {
+                    lessonId: lessonId,
+                    content: content
+                },
+                success: function(result) {
+                    if (result.code == 0) {
+                        $.modal.closeLoading();
+                        // 根据内容长度判断提示信息
+                        var message = content.length > 500 ? "已成功生成音频" : "已成功生成视频";
+                        $.modal.msgSuccess(message);
+                        $.table.refresh();
+                    } else {
+                        $.modal.closeLoading();
+                        $.modal.alertError("生成失败：" + result.msg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $.modal.closeLoading();
+                    $.modal.alertError("系统错误：" + error);
+                }
+            });
+        }
+    </script>
+
+    <!-- 在原有代码的基础上，先添加模态框 -->
+    <div class="modal fade" id="generateVideoModal" tabindex="-1" role="dialog" aria-labelledby="generateVideoModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="generateVideoModalLabel">生成AI视频</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateVideoForm">
+                        <input type="hidden" id="lessonId" name="lessonId">
+                        <div class="form-group">
+                            <label for="content">视频内容</label>
+                            <textarea class="form-control" id="content" name="content" rows="6" 
+                                    placeholder="请输入要生成的视频内容，若字数超过500，只能生成音频"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitGenerateVideo()">生成</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

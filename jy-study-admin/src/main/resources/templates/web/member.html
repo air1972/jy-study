@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会员中心</title>
+    <link href="/css/bootstrap-v4/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/css/web-common.css" rel="stylesheet"/>
+    <style>
+        .member-container { padding: 36px 0; }
+        .member-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .plan-btn { min-width: 120px; margin-right: 10px; margin-bottom: 10px; }
+        .member-tag { font-size: 14px; padding: 4px 10px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+<div th:replace="~{web/fragments/navbar :: navbar}"></div>
+
+<div class="member-container">
+    <div class="container">
+        <div class="member-card">
+            <h3 style="margin-top: 0;">
+                <i class="fa fa-diamond"></i> 会员中心
+            </h3>
+            <p>
+                当前状态：
+                <span id="memberStatus" class="member-tag badge-secondary">普通用户</span>
+            </p>
+            <p>会员到期时间：<strong id="expireTime">-</strong></p>
+        </div>
+
+        <div class="member-card">
+            <h4 style="margin-top: 0;">充值续费</h4>
+            <p class="text-muted">支持微信支付续费。可直接返回，不强制完成支付。</p>
+            <div style="margin-bottom: 8px;">
+                <strong>微信支付：</strong>
+            </div>
+            <button class="btn btn-success plan-btn" onclick="wechatPay(1)">1个月 ¥29.9</button>
+            <button class="btn btn-success plan-btn" onclick="wechatPay(3)">3个月 ¥79.9</button>
+            <button class="btn btn-success plan-btn" onclick="wechatPay(6)">6个月 ¥149.9</button>
+            <button class="btn btn-success plan-btn" onclick="wechatPay(12)">12个月 ¥269.9</button>
+        </div>
+
+        <div class="member-card">
+            <h4 style="margin-top: 0;">最近充值记录</h4>
+            <div id="recordBox" class="text-muted">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/ajax/libs/layer/layer.min.js"></script>
+<script src="/ruoyi/js/common.js"></script>
+<script>
+    var ctx = '/';
+    $(function () {
+        loadStatus();
+        loadRecords();
+    });
+
+    function loadStatus() {
+        $.get(ctx + "web/member/status", function (res) {
+            if (res.code !== 0) return;
+            var data = res.data || {};
+            if (data.active) {
+                $("#memberStatus").removeClass("badge-secondary").addClass("badge-success").text("会员有效");
+            } else {
+                $("#memberStatus").removeClass("badge-success").addClass("badge-secondary").text("普通用户");
+            }
+            $("#expireTime").text(data.vipExpireTime || "-");
+        });
+    }
+
+    function loadRecords() {
+        $.get(ctx + "web/member/records", function (res) {
+            if (res.code !== 0) {
+                $("#recordBox").text(res.msg || "加载失败");
+                return;
+            }
+            var list = res.data || [];
+            if (!list.length) {
+                $("#recordBox").text("暂无充值记录");
+                return;
+            }
+            var html = '<table class="table table-striped"><thead><tr><th>订单号</th><th>月数</th><th>金额</th><th>续费后到期</th><th>时间</th></tr></thead><tbody>';
+            for (var i = 0; i < list.length; i++) {
+                var r = list[i];
+                html += '<tr><td>' + (r.rechargeNo || '') + '</td><td>' + (r.months || 0) + '</td><td>¥' + (r.amount || '0.00') + '</td><td>' + (r.expireAfter || '') + '</td><td>' + (r.createTime || '') + '</td></tr>';
+            }
+            html += '</tbody></table>';
+            $("#recordBox").html(html);
+        });
+    }
+
+    function wechatPay(months) {
+        $.post(ctx + "web/member/wechat/create", {months: months}, function (res) {
+            if (res.code !== 0) {
+                layer.msg(res.msg || "创建微信支付单失败", {icon: 2});
+                return;
+            }
+            var data = res.data || {};
+            var rechargeNo = data.rechargeNo || "";
+            var payUrl = data.payUrl || "";
+            var amount = data.amount || "0.00";
+            var content = '订单号：' + rechargeNo + '<br>' +
+                '支付金额：¥' + amount + '<br>' +
+                '收银台地址：' + payUrl + '<br><br>' +
+                '说明：你可以选择“已支付并续费”，也可以直接返回（未支付）。';
+
+            layer.confirm(content, {
+                title: '微信支付',
+                btn: ['已支付并续费', '先返回（未支付）']
+            }, function (index) {
+                $.post(ctx + "web/member/wechat/confirm", {rechargeNo: rechargeNo}, function (confirmRes) {
+                    if (confirmRes.code === 0) {
+                        layer.msg(confirmRes.msg || "续费成功", {icon: 1});
+                        loadStatus();
+                        loadRecords();
+                    } else {
+                        layer.msg(confirmRes.msg || "续费失败", {icon: 2});
+                    }
+                });
+                layer.close(index);
+            }, function (index) {
+                layer.msg("已返回，你可以稍后再完成支付", {icon: 0});
+                layer.close(index);
+            });
+        });
+    }
+</script>
+</body>
+</html>

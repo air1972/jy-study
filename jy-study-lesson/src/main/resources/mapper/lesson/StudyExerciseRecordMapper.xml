@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyExerciseRecordMapper">
+    
+    <insert id="insertStudyExerciseRecord" parameterType="StudyExerciseRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into study_exercise_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="exerciseId != null">exercise_id,</if>
+            <if test="userAnswer != null and userAnswer != ''">user_answer,</if>
+            <if test="isCorrect != null">is_correct,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="exerciseId != null">#{exerciseId},</if>
+            <if test="userAnswer != null and userAnswer != ''">#{userAnswer},</if>
+            <if test="isCorrect != null">#{isCorrect},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <select id="selectStudyExerciseRecordByUserId" parameterType="Long" resultType="StudyExerciseRecord">
+        select id, user_id, exercise_id, user_answer, is_correct, create_time
+        from study_exercise_record
+        where user_id = #{userId}
+        order by create_time desc
+    </select>
+
+</mapper>

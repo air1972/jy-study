@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('AI对话记录列表')" />
+</head>
+<body class="gray-bg">
+     <div class="container-div">
+        <div class="row">
+            <div class="col-sm-12 search-collapse">
+                <form id="chat-form">
+                    <div class="select-list">
+                        <ul>
+                            <li>
+                                会话ID：<input type="text" name="conversationId"/>
+                            </li>
+                            <li>
+                                用户ID：<input type="text" name="userId"/>
+                            </li>
+                            <li>
+                                内容：<input type="text" name="content"/>
+                            </li>
+                            <li>
+                                角色：<select name="role">
+                                    <option value="">所有</option>
+                                    <option value="system">系统</option>
+                                    <option value="user">用户</option>
+                                    <option value="assistant">助手</option>
+                                </select>
+                            </li>
+                            <li>
+                                状态：<select name="status">
+                                    <option value="">所有</option>
+                                    <option value="0">正常</option>
+                                    <option value="1">删除</option>
+                                </select>
+                            </li>
+                            <li class="select-time">
+                                <label>创建时间： </label>
+                                <input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+                                <span>-</span>
+                                <input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+                            </li>
+                            <li>
+                                <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                                <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                            </li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div class="btn-group-sm" id="toolbar" role="group">
+            </div>
+            <div class="col-sm-12 select-table table-striped">
+                <table id="bootstrap-table"></table>
+            </div>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "aichat";
+
+        $(function() {
+            var options = {
+                url: prefix + "/listData",
+                sortName: "createTime",
+                sortOrder: "desc",
+                modalName: "对话记录",
+                escape: true,
+                showPageGo: true,
+                rememberSelected: true,
+                columns: [{
+                    field: 'chatId',
+                    title: '记录ID',
+                    visible: false
+                },
+                {
+                    field: 'conversationId',
+                    title: '会话ID'
+                },
+                {
+                    field: 'userId',
+                    title: '用户ID'
+                },
+                {
+                    field: 'role',
+                    title: '角色',
+                    formatter: function(value, row, index) {
+                        if (value === 'system') {
+                            return '<span class="badge badge-info">系统</span>';
+                        } else if (value === 'user') {
+                            return '<span class="badge badge-primary">用户</span>';
+                        } else if (value === 'assistant') {
+                            return '<span class="badge badge-success">助手</span>';
+                        }
+                        return value;
+                    }
+                },
+                {
+                    field: 'content',
+                    title: '内容',
+                    formatter: function(value, row, index) {
+                        return $.table.tooltip(value, 50);
+                    }
+                },
+                {
+                    field: 'model',
+                    title: '模型'
+                },
+                {
+                    field: 'createTime',
+                    title: '创建时间',
+                    sortable: true
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    formatter: function(value, row, index) {
+                        var actions = [];
+                        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="detail(\'' + row.conversationId + '\')"><i class="fa fa-search"></i>详情</a> ');
+                        return actions.join('');
+                    }
+                }]
+            };
+            $.table.init(options);
+        });
+        
+        /* 详情查看 */
+        function detail(conversationId) {
+            var url = prefix + '/detail/' + conversationId;
+            $.modal.open("查看对话详情", url);
+        }
+    </script>
+</body>
+</html>
