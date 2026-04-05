@@ -324,6 +324,7 @@ public class ShiroConfig
         filterChainDefinitionMap.put("/web/images/**", "anon");
         // 需要登录才能访问的接口，要放在/web/user/**之前
         filterChainDefinitionMap.put("/web/user/**", "authc");
+        filterChainDefinitionMap.put("/web/chat/**", "authc");
         filterChainDefinitionMap.put("/llm/**", "authc");
         filterChainDefinitionMap.put("/aichat/**", "authc");
         filterChainDefinitionMap.put("/coze/**", "authc");

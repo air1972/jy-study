@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyOnlineChatRoomUserMapper">
+
+    <resultMap type="StudyOnlineChatRoomUser" id="StudyOnlineChatRoomUserResult">
+        <result property="id" column="id"/>
+        <result property="roomCode" column="room_code"/>
+        <result property="userId" column="user_id"/>
+        <result property="loginName" column="login_name"/>
+        <result property="userName" column="user_name"/>
+        <result property="role" column="role"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectRoomUser" resultMap="StudyOnlineChatRoomUserResult">
+        select id, room_code, user_id, login_name, user_name, role, status,
+               create_by, create_time, update_by, update_time
+        from study_online_chat_room_user
+        where room_code = #{roomCode}
+          and user_id = #{userId}
+          and status = '0'
+        limit 1
+    </select>
+
+    <insert id="upsertRoomUser" parameterType="StudyOnlineChatRoomUser">
+        insert into study_online_chat_room_user
+        (room_code, user_id, login_name, user_name, role, status, create_by, create_time, update_by, update_time)
+        values
+        (#{roomCode}, #{userId}, #{loginName}, #{userName}, #{role}, #{status}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})
+        on duplicate key update
+        login_name = values(login_name),
+        user_name = values(user_name),
+        role = case when status = '1' then values(role) else role end,
+        status = '0',
+        update_by = values(update_by),
+        update_time = values(update_time)
+    </insert>
+
+    <update id="updateRoomUserRole">
+        update study_online_chat_room_user
+        set role = #{role},
+            update_by = #{updateBy},
+            update_time = now()
+        where room_code = #{roomCode}
+          and user_id = #{userId}
+          and status = '0'
+    </update>
+
+    <select id="selectEnabledRoomUsers" resultMap="StudyOnlineChatRoomUserResult">
+        select id, room_code, user_id, login_name, user_name, role, status,
+               create_by, create_time, update_by, update_time
+        from study_online_chat_room_user
+        where room_code = #{roomCode}
+          and status = '0'
+        order by case role when 'owner' then 0 when 'admin' then 1 else 2 end asc,
+                 create_time asc,
+                 id asc
+    </select>
+
+    <update id="disableRoomUsers">
+        update study_online_chat_room_user
+        set status = '1',
+            update_by = #{updateBy},
+            update_time = #{updateTime}
+        where room_code = #{roomCode}
+          and status = '0'
+    </update>
+
+    <delete id="deleteRoomUsersByRoomCode">
+        delete from study_online_chat_room_user
+        where room_code = #{roomCode}
+    </delete>
+</mapper>

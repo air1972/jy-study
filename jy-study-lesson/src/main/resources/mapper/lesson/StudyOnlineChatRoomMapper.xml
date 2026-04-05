@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyOnlineChatRoomMapper">
+
+    <resultMap type="StudyOnlineChatRoom" id="StudyOnlineChatRoomResult">
+        <result property="roomId" column="room_id"/>
+        <result property="roomCode" column="room_code"/>
+        <result property="roomName" column="room_name"/>
+        <result property="ownerUserId" column="owner_user_id"/>
+        <result property="ownerLoginName" column="owner_login_name"/>
+        <result property="ownerUserName" column="owner_user_name"/>
+        <result property="status" column="status"/>
+        <result property="myRole" column="my_role"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectStudyOnlineChatRoomVo">
+        select room_id, room_code, room_name, owner_user_id, owner_login_name, owner_user_name,
+               status, create_by, create_time, update_by, update_time
+        from study_online_chat_room
+    </sql>
+
+    <select id="selectEnabledRoomsWithMyRole" resultMap="StudyOnlineChatRoomResult">
+        select r.room_id, r.room_code, r.room_name, r.owner_user_id, r.owner_login_name, r.owner_user_name,
+               r.status, r.create_by, r.create_time, r.update_by, r.update_time,
+               case
+                   when r.owner_user_id = #{userId} then 'owner'
+                   when ru.role is not null and ru.role != '' then ru.role
+                   else 'visitor'
+               end as my_role
+        from study_online_chat_room r
+        left join study_online_chat_room_user ru
+               on ru.room_code = r.room_code
+              and ru.user_id = #{userId}
+              and ru.status = '0'
+        where r.status = '0'
+        order by case when r.room_code = 'public-room' then 0 else 1 end asc,
+                 r.create_time desc,
+                 r.room_id desc
+    </select>
+
+    <select id="selectEnabledRoomByCode" resultMap="StudyOnlineChatRoomResult">
+        <include refid="selectStudyOnlineChatRoomVo"/>
+        where room_code = #{roomCode}
+          and status = '0'
+        limit 1
+    </select>
+
+    <select id="selectRoomByCode" resultMap="StudyOnlineChatRoomResult">
+        <include refid="selectStudyOnlineChatRoomVo"/>
+        where room_code = #{roomCode}
+        limit 1
+    </select>
+
+    <insert id="insertStudyOnlineChatRoom" parameterType="StudyOnlineChatRoom" useGeneratedKeys="true" keyProperty="roomId">
+        insert into study_online_chat_room
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">room_code,</if>
+            <if test="roomName != null and roomName != ''">room_name,</if>
+            <if test="ownerUserId != null">owner_user_id,</if>
+            <if test="ownerLoginName != null and ownerLoginName != ''">owner_login_name,</if>
+            <if test="ownerUserName != null and ownerUserName != ''">owner_user_name,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">#{roomCode},</if>
+            <if test="roomName != null and roomName != ''">#{roomName},</if>
+            <if test="ownerUserId != null">#{ownerUserId},</if>
+            <if test="ownerLoginName != null and ownerLoginName != ''">#{ownerLoginName},</if>
+            <if test="ownerUserName != null and ownerUserName != ''">#{ownerUserName},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateRoomOwner" parameterType="StudyOnlineChatRoom">
+        update study_online_chat_room
+        set owner_user_id = #{ownerUserId},
+            owner_login_name = #{ownerLoginName},
+            owner_user_name = #{ownerUserName},
+            update_by = #{updateBy},
+            update_time = #{updateTime}
+        where room_code = #{roomCode}
+          and status = '0'
+    </update>
+
+    <update id="closeRoom">
+        update study_online_chat_room
+        set status = '1',
+            update_by = #{updateBy},
+            update_time = #{updateTime}
+        where room_code = #{roomCode}
+          and status = '0'
+    </update>
+
+    <delete id="deleteRoomByCode">
+        delete from study_online_chat_room
+        where room_code = #{roomCode}
+    </delete>
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyOnlineChatOperationLogMapper">
+
+    <resultMap type="StudyOnlineChatOperationLog" id="StudyOnlineChatOperationLogResult">
+        <result property="logId" column="log_id"/>
+        <result property="roomCode" column="room_code"/>
+        <result property="actionType" column="action_type"/>
+        <result property="operatorUserId" column="operator_user_id"/>
+        <result property="operatorLoginName" column="operator_login_name"/>
+        <result property="operatorUserName" column="operator_user_name"/>
+        <result property="targetUserId" column="target_user_id"/>
+        <result property="targetUserName" column="target_user_name"/>
+        <result property="detail" column="detail"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <insert id="insertStudyOnlineChatOperationLog" parameterType="StudyOnlineChatOperationLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into study_online_chat_operation_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">room_code,</if>
+            <if test="actionType != null and actionType != ''">action_type,</if>
+            <if test="operatorUserId != null">operator_user_id,</if>
+            <if test="operatorLoginName != null and operatorLoginName != ''">operator_login_name,</if>
+            <if test="operatorUserName != null and operatorUserName != ''">operator_user_name,</if>
+            <if test="targetUserId != null">target_user_id,</if>
+            <if test="targetUserName != null and targetUserName != ''">target_user_name,</if>
+            <if test="detail != null and detail != ''">detail,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">#{roomCode},</if>
+            <if test="actionType != null and actionType != ''">#{actionType},</if>
+            <if test="operatorUserId != null">#{operatorUserId},</if>
+            <if test="operatorLoginName != null and operatorLoginName != ''">#{operatorLoginName},</if>
+            <if test="operatorUserName != null and operatorUserName != ''">#{operatorUserName},</if>
+            <if test="targetUserId != null">#{targetUserId},</if>
+            <if test="targetUserName != null and targetUserName != ''">#{targetUserName},</if>
+            <if test="detail != null and detail != ''">#{detail},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <select id="selectRecentLogs" resultMap="StudyOnlineChatOperationLogResult">
+        select log_id, room_code, action_type,
+               operator_user_id, operator_login_name, operator_user_name,
+               target_user_id, target_user_name, detail, create_time
+        from study_online_chat_operation_log
+        where room_code = #{roomCode}
+        order by create_time desc, log_id desc
+        limit #{limitSize}
+    </select>
+
+    <delete id="deleteOperationLogsByRoomCode">
+        delete from study_online_chat_operation_log
+        where room_code = #{roomCode}
+    </delete>
+</mapper>

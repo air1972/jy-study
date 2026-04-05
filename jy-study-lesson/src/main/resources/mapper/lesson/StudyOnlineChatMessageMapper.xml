@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jy.study.lesson.mapper.StudyOnlineChatMessageMapper">
+
+    <resultMap type="StudyOnlineChatMessage" id="StudyOnlineChatMessageResult">
+        <result property="messageId" column="message_id"/>
+        <result property="roomCode" column="room_code"/>
+        <result property="userId" column="user_id"/>
+        <result property="loginName" column="login_name"/>
+        <result property="userName" column="user_name"/>
+        <result property="replyMessageId" column="reply_message_id"/>
+        <result property="replyUserName" column="reply_user_name"/>
+        <result property="replyContent" column="reply_content"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectStudyOnlineChatMessageVo">
+        select message_id, room_code, user_id, login_name, user_name,
+               reply_message_id, reply_user_name, reply_content,
+               content, create_time
+        from study_online_chat_message
+    </sql>
+
+    <select id="selectRecentMessages" resultMap="StudyOnlineChatMessageResult">
+        select *
+        from (
+            <include refid="selectStudyOnlineChatMessageVo"/>
+            where room_code = #{roomCode}
+            order by create_time desc, message_id desc
+            limit #{limitSize}
+        ) recent_messages
+        order by create_time asc, message_id asc
+    </select>
+
+    <select id="selectMessagesAfterId" resultMap="StudyOnlineChatMessageResult">
+        <include refid="selectStudyOnlineChatMessageVo"/>
+        where room_code = #{roomCode}
+          and message_id &gt; #{lastMessageId}
+        order by message_id asc
+        limit #{limitSize}
+    </select>
+
+    <select id="selectMessageByIdInRoom" resultMap="StudyOnlineChatMessageResult">
+        <include refid="selectStudyOnlineChatMessageVo"/>
+        where room_code = #{roomCode}
+          and message_id = #{messageId}
+        limit 1
+    </select>
+
+    <insert id="insertStudyOnlineChatMessage" parameterType="StudyOnlineChatMessage" useGeneratedKeys="true" keyProperty="messageId">
+        insert into study_online_chat_message
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">room_code,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="loginName != null and loginName != ''">login_name,</if>
+            <if test="userName != null and userName != ''">user_name,</if>
+            <if test="replyMessageId != null">reply_message_id,</if>
+            <if test="replyUserName != null and replyUserName != ''">reply_user_name,</if>
+            <if test="replyContent != null and replyContent != ''">reply_content,</if>
+            <if test="content != null and content != ''">content,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="roomCode != null and roomCode != ''">#{roomCode},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="loginName != null and loginName != ''">#{loginName},</if>
+            <if test="userName != null and userName != ''">#{userName},</if>
+            <if test="replyMessageId != null">#{replyMessageId},</if>
+            <if test="replyUserName != null and replyUserName != ''">#{replyUserName},</if>
+            <if test="replyContent != null and replyContent != ''">#{replyContent},</if>
+            <if test="content != null and content != ''">#{content},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteMessagesByRoomCode">
+        delete from study_online_chat_message
+        where room_code = #{roomCode}
+    </delete>
+</mapper>

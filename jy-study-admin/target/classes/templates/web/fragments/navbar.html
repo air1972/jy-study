@@ -93,6 +93,13 @@
                     <li class="nav-item">
                         <a class="nav-link" th:href="@{/web/exercise}"><i class="fa fa-pencil-square-o"></i> 习题库</a>
                     </li>
+                    <th:block shiro:authenticated="">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/web/chat/room}">
+                                <i class="fa fa-comments"></i> 在线聊天室
+                            </a>
+                        </li>
+                    </th:block>
                     <li class="nav-item" shiro:hasRole="admin">
                         <a class="nav-link" th:href="@{/index}">
                             <i class="fa fa-cogs"></i> 后台管理

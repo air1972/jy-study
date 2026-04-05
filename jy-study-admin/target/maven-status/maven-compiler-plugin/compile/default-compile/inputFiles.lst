@@ -22,6 +22,7 @@ E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\util\Answ
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebInteractionController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebLikeController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\system\SysMenuController.java
+E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebChatController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\tool\ImageController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\study\LearningPathController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\common\CozeController.java
@@ -29,6 +30,7 @@ E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controlle
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\study\LessonExerciseController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebMemberController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\controller\DemoController.java
+E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\websocket\OnlineChatWebSocketHandler.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebHistoryController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebCollectionController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\study\StudyClassificationController.java
@@ -44,7 +46,9 @@ E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controlle
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\system\SysIndexController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\core\config\SwaggerConfig.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\monitor\DruidController.java
+E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\websocket\OnlineChatWebSocketConfig.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\system\SysRoleController.java
+E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\websocket\OnlineChatHandshakeInterceptor.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\web\WebCommentController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\study\WrongAnswerController.java
 E:\new\jy-study\jy-study\jy-study-admin\src\main\java\com\jy\study\web\controller\system\SysConfigController.java
